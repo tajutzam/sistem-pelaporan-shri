@@ -2,12 +2,13 @@
 
 @section('content')
 
-    <h2 class="font-bold text-2xl mb-4 underline">Pasien Pindah</h2>
+    <h2 class="font-bold text-2xl mb-4 underline">Pasien Keluar</h2>
 
     <div x-data="{ open: false }">
-        <!-- Header Section -->
+
+        <!-- Header -->
         <div class="flex justify-between mt-3 bg-[#34495E] p-4 rounded-lg text-white">
-            <h2>Daftar Pasien Pindah</h2>
+            <h2>Daftar Pasien Keluar</h2>
             <button @click="open = true" class="flex items-center gap-3">
                 <i class="fa-solid fa-plus"></i>
                 <span>Tambah</span>
@@ -15,20 +16,22 @@
         </div>
 
         <!-- Modal -->
-        <div x-show="open" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-8"
+        <div x-show="open" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0"
             x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200"
             x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-            class="fixed inset-0 z-50 flex items-center justify-center" style="background-color: rgba(0, 0, 0, 0.50)"
-            x-cloak>
-            <div class="bg-gray-100 p-6 rounded-lg w-full max-w-4xl relative">
-                <h2 class="text-lg font-semibold underline mb-4">Formulir Pendaftaran Pasien Pindah</h2>
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" x-cloak>
+            <div class="bg-gray-100 p-6 rounded-lg w-full max-w-4xl"
+                x-transition:enter="transition ease-out duration-300 transform" x-transition:enter-start="scale-95"
+                x-transition:enter-end="scale-100" x-transition:leave="transition ease-in duration-200 transform"
+                x-transition:leave-start="scale-100" x-transition:leave-end="scale-95">
+                <h2 class="text-lg font-semibold underline mb-4">Formulir Pendaftaran Pasien Keluar</h2>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label>No. Rekam Medis</label>
                         <input type="text" class="w-full bg-gray-300 p-2 rounded" disabled />
                     </div>
                     <div>
-                        <label>Tanggal Pindah</label>
+                        <label>Tanggal Keluar</label>
                         <input type="date" class="w-full p-2 rounded border" />
                     </div>
                     <div>
@@ -36,10 +39,10 @@
                         <input type="text" class="w-full bg-gray-300 p-2 rounded" disabled />
                     </div>
                     <div>
-                        <label>Ruangan Tujuan</label>
+                        <label>DPJP</label>
                         <select class="w-full p-2 rounded border">
                             <option>Pilih salah satu</option>
-                            <option>Ruang NICU</option>
+                            <option>DPJP001</option>
                         </select>
                     </div>
                     <div>
@@ -47,11 +50,10 @@
                         <input type="text" class="w-full bg-gray-300 p-2 rounded" disabled />
                     </div>
                     <div>
-                        <label>Kelas Tujuan</label>
+                        <label>Diagnosa Akhir</label>
                         <select class="w-full p-2 rounded border">
                             <option>Pilih salah satu</option>
-                            <option>Kelas I</option>
-                            <option>Kelas II</option>
+                            <option>Diagnosa A</option>
                         </select>
                     </div>
                     <div>
@@ -59,14 +61,24 @@
                         <input type="text" class="w-full bg-gray-300 p-2 rounded" disabled />
                     </div>
                     <div>
-                        <label>Lama Dirawat</label>
-                        <input type="text" class="w-full bg-gray-300 p-2 rounded" disabled />
+                        <label>Cara Keluar</label>
+                        <select class="w-full p-2 rounded border">
+                            <option>Pilih salah satu</option>
+                            <option>Rawat Jalan</option>
+                            <option>Rujuk</option>
+                            <option>Pulang</option>
+                        </select>
                     </div>
                     <div class="col-span-2">
                         <label>Ruangan</label>
                         <input type="text" class="w-full bg-gray-300 p-2 rounded" disabled />
                     </div>
+                    <div>
+                        <label>Lama Dirawat</label>
+                        <input type="text" class="w-full bg-gray-300 p-2 rounded" disabled />
+                    </div>
                 </div>
+
                 <div class="flex justify-end gap-4 mt-6">
                     <button @click="open = false" class="bg-gray-600 text-white px-4 py-2 rounded">Tutup</button>
                     <button class="bg-blue-600 text-white px-4 py-2 rounded">Simpan</button>
@@ -74,43 +86,32 @@
             </div>
         </div>
 
-        <!-- Search Bar -->
-        <div class="flex justify-end mt-4">
-            <div class="relative w-full max-w-xs bg-[#E7E9D4]">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">
-                    <i class="fas fa-search"></i>
-                </div>
-                <input type="text" placeholder="Search..."
-                    class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full" />
-            </div>
-        </div>
-
-        <!-- Tabel Pasien Pindah -->
+        <!-- Tabel Pasien Keluar -->
         <div class="overflow-x-auto mt-6">
             <table class="min-w-full border border-gray-300 text-sm text-left">
                 <thead class="bg-gray-100">
                     <tr>
+                        <th class="px-4 py-2 border">Tanggal Keluar</th>
                         <th class="px-4 py-2 border">No Rekam Medis</th>
                         <th class="px-4 py-2 border">Nama Pasien</th>
                         <th class="px-4 py-2 border">Jenis Kelamin</th>
-                        <th class="px-4 py-2 border">Tanggal Masuk</th>
-                        <th class="px-4 py-2 border">Ruang Awal</th>
-                        <th class="px-4 py-2 border">Tanggal Pindah</th>
-                        <th class="px-4 py-2 border">Ruang Tujuan</th>
-                        <th class="px-4 py-2 border">Kelas Tujuan</th>
+                        <th class="px-4 py-2 border">Ruangan</th>
+                        <th class="px-4 py-2 border">Diagnosa Akhir</th>
+                        <th class="px-4 py-2 border">Cara Keluar</th>
+                        <th class="px-4 py-2 border">Lama Dirawat</th>
                         <th class="px-4 py-2 border">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white">
                     <tr class="hover:bg-gray-50">
-                        <td class="px-4 py-2 border">RM654321</td>
-                        <td class="px-4 py-2 border">Siti Aminah</td>
-                        <td class="px-4 py-2 border">Perempuan</td>
-                        <td class="px-4 py-2 border">2024-06-20</td>
-                        <td class="px-4 py-2 border">Ruang Anak</td>
-                        <td class="px-4 py-2 border">2024-06-24</td>
-                        <td class="px-4 py-2 border">Ruang NICU</td>
-                        <td class="px-4 py-2 border">Kelas II</td>
+                        <td class="px-4 py-2 border">2024-06-26</td>
+                        <td class="px-4 py-2 border">RM123456</td>
+                        <td class="px-4 py-2 border">Budi Santoso</td>
+                        <td class="px-4 py-2 border">Laki-laki</td>
+                        <td class="px-4 py-2 border">Ruang Bedah</td>
+                        <td class="px-4 py-2 border">Diagnosa A</td>
+                        <td class="px-4 py-2 border">Pulang</td>
+                        <td class="px-4 py-2 border">5 hari</td>
                         <td class="px-4 py-2 border flex gap-2">
                             <a href="#" class="text-blue-600 hover:text-blue-800">
                                 <i class="fas fa-edit"></i>
@@ -120,9 +121,6 @@
                             </a>
                         </td>
                     </tr>
-                    {{-- @foreach ($pindahList as $data)
-                    <tr>...</tr>
-                    @endforeach --}}
                 </tbody>
             </table>
         </div>

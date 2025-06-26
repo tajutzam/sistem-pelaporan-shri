@@ -16,4 +16,10 @@ Route::prefix("register-shri")->group(function () {
     Route::get("masuk", [RegisterShriController::class, "masukView"]);
     Route::get("masuk/create", [RegisterShriController::class, "masukCreate"])->name('form.masuk');
 
+    Route::get("pindah", [RegisterShriController::class, "pindahView"]);
+    Route::get("pindah/create", [RegisterShriController::class, "pindahCreate"])->name('form.pindah');
+
+    Route::get("keluar", [RegisterShriController::class, "keluarView"]);
+
+
 });
