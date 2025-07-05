@@ -30,6 +30,16 @@ class RegisterShriController extends Controller
         return view('pages.shri.pindah.create');
     }
 
+    public function daftarPasienDirawatPindah()
+    {
+        return view("pages.shri.pindah.daftar");
+    }
+
+    public function daftarPasienDirawatKeluar()
+    {
+
+    }
+
     public function masukCreate()
     {
         return view('pages.shri.masuk.create');

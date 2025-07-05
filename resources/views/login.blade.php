@@ -67,6 +67,40 @@
         </div>
     </div>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            @if ($errors->any())
+                let errors = "";
+                @foreach ($errors->all() as $error)
+                    errors += "• {{ $error }}\n";
+                @endforeach
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    html: errors.replace(/\n/g, '<br>'),
+                });
+            @endif
+
+            @if (session('error'))
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: "{{ session('error') }}",
+                });
+            @endif
+
+            @if (session('success'))
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Sukses',
+                    text: "{{ session('success') }}",
+                    timer: 2500,
+                    showConfirmButton: false,
+                });
+            @endif
+    });
+    </script>
+
 </body>
 
 </html>

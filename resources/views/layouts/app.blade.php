@@ -29,60 +29,31 @@
                 </div>
 
                 <!-- Navigation Menu -->
-                <nav class="mt-4 space-y-2 px-4">
-                    <a href="/dashboard" class="block py-2 px-4 rounded hover:bg-white hover:text-[#2F3E52] transition">
-                        <i class="fas fa-home mr-2"></i> Dashboard
-                    </a>
+                @if (checkRole('perawat'))
+                    @include('layouts.sidebar-perawat')
+                @endif
 
-                    <!-- Register SHRI Dropdown -->
-                    <div x-data="{ open: false }">
-                        <button @click="open = !open"
-                            class="w-full flex justify-between items-center py-2 px-4 rounded hover:bg-white hover:text-[#2F3E52] transition">
-                            <span><i class="fas fa-user-plus mr-2"></i> Register SHRI</span>
-                            <i :class="{ 'rotate-90': open }" class="fas fa-chevron-right transition-transform"></i>
-                        </button>
-                        <div x-show="open" x-collapse class="ml-4 mt-1 space-y-1">
-                            <a href="/register-shri/masuk"
-                                class="block py-2 px-4 rounded hover:bg-white hover:text-[#2F3E52] transition">
-                                <i class="fas fa-sign-in-alt mr-2"></i> Pasien Masuk
-                            </a>
-                            <a href="/register-shri/pindah"
-                                class="block py-2 px-4 rounded hover:bg-white hover:text-[#2F3E52] transition">
-                                <i class="fas fa-exchange-alt mr-2"></i> Pasien Pindah
-                            </a>
-                            <a href="/register-shri/keluar"
-                                class="block py-2 px-4 rounded hover:bg-white hover:text-[#2F3E52] transition">
-                                <i class="fas fa-sign-out-alt mr-2"></i> Pasien Keluar
-                            </a>
-                        </div>
-                    </div>
+                @if (checkRole('kepala'))
+                    @include('layouts.sidebar-kepala')
+                @endif
 
-                    <!-- Laporan Dropdown -->
-                    <div x-data="{ open: false }">
-                        <button @click="open = !open"
-                            class="w-full flex justify-between items-center py-2 px-4 rounded hover:bg-white hover:text-[#2F3E52] transition">
-                            <span><i class="fas fa-file-alt mr-2"></i> Laporan</span>
-                            <i :class="{ 'rotate-90': open }" class="fas fa-chevron-right transition-transform"></i>
-                        </button>
-                        <div x-show="open" x-collapse class="ml-4 mt-1 space-y-1">
-                            <a href="/laporan/kunjungan"
-                                class="block py-2 px-4 rounded hover:bg-white hover:text-[#2F3E52] transition">
-                                <i class="fas fa-notes-medical mr-2"></i> Rekapitulasi Kunjungan RI
-                            </a>
-                            <a href="/laporan/shri"
-                                class="block py-2 px-4 rounded hover:bg-white hover:text-[#2F3E52] transition">
-                                <i class="fas fa-procedures mr-2"></i> Rekapitulasi SHRI
-                            </a>
-                        </div>
-                    </div>
-                </nav>
+                @if (checkRole('pelaporan'))
+                    @include('layouts.sidebar-pelaporan')
+                @endif
+
             </div>
 
             <div class="p-4 border-t border-white/20">
-                <a href="/logout" class="flex items-center gap-2 text-sm hover:text-red-500 transition">
-                    <i class="fas fa-sign-out-alt"></i> Log Out
-                </a>
+                <form action="/logout" method="POST"
+                    class="flex items-center gap-2 text-sm hover:text-red-500 transition">
+                    @csrf
+                    <button type="submit"
+                        class="flex items-center gap-2 text-sm hover:text-red-500 transition bg-transparent border-none p-0 cursor-pointer">
+                        <i class="fas fa-sign-out-alt"></i> Log Out
+                    </button>
+                </form>
             </div>
+
         </aside>
 
         <div class="fixed inset-0  bg-opacity-10 z-40 lg:hidden" x-show="sidebarOpen" @click="sidebarOpen = false"
@@ -109,8 +80,12 @@
                     <div class="flex items-center gap-2">
                         <img src="https://i.pravatar.cc/32?u=natalia" alt="User" class="rounded-full w-8 h-8" />
                         <div>
-                            <p class="text-sm font-medium">Natalia</p>
-                            <p class="text-xs text-gray-300">Perawat-01</p>
+                            <p class="text-sm font-medium">
+                                {{auth()->user()->name}}
+                            </p>
+                            <p class="text-xs text-gray-300">
+                                {{auth()->user()->role}} Puskesmas
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -125,6 +100,41 @@
 
 
     @stack('js')
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            @if ($errors->any())
+                let errors = "";
+                @foreach ($errors->all() as $error)
+                    errors += "• {{ $error }}\n";
+                @endforeach
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    html: errors.replace(/\n/g, '<br>'),
+                });
+            @endif
+
+            @if (session('error'))
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: "{{ session('error') }}",
+                });
+            @endif
+
+            @if (session('success'))
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Sukses',
+                    text: "{{ session('success') }}",
+                    timer: 2500,
+                    showConfirmButton: false,
+                });
+            @endif
+    });
+    </script>
+
 
 </body>
 
