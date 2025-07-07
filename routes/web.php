@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DiagnosaController;
 use App\Http\Controllers\DpjpController;
+use App\Http\Controllers\GrafixController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\PasienController;
 use App\Http\Controllers\PenggunaController;
@@ -55,6 +56,9 @@ Route::middleware('auth')->group(function () {
     });
 
 
+    Route::prefix('grafik')->group(function () {
+        Route::get("kunjungan-pasien", [GrafixController::class, "kunjungan"]);
+    });
 
     // logout
 
