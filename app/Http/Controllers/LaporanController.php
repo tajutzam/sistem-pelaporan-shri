@@ -18,4 +18,12 @@ class LaporanController extends Controller
         return view('pages.laporan.rekapitulasi');
     }
 
+    public function indikatorPelayanan(){
+        return view('pages.laporan.indikator_pelayanan');
+    }
+
+    public function tenDiagnosaPenyakit(){
+        return view('pages.laporan.10_besar_penyakit');
+    }
+
 }

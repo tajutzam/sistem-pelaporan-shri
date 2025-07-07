@@ -38,6 +38,11 @@ Route::middleware('auth')->group(function () {
     Route::prefix('laporan')->group(function () {
         Route::get('kunjungan', [LaporanController::class, 'laporanKunjungan'])->name('laporan.kunjungan');
         Route::get('rekapitulasi', [LaporanController::class, 'rekapitulasi'])->name('laporan.rekapitulasi');
+
+
+        Route::get("indikator-pelayanan", [LaporanController::class, "indikatorPelayanan"])->name('laporan-indikator');
+        Route::get("10-penyakit", [LaporanController::class, "tenDiagnosaPenyakit"])->name('laporan-10-penyakit');
+
     });
 
     Route::prefix("data")->group(function () {

@@ -4,7 +4,6 @@
     <h2 class="font-bold text-2xl mb-4 underline">Data Diagnosa</h2>
 
     <div x-data="{ open: false, editOpen: false, editDiagnosa: {} }">
-        {{-- Header --}}
         <div class="flex justify-between px-4 py-2 bg-[#34495E] rounded-lg text-white">
             <h2>Daftar Diagnosa</h2>
             <button @click="open = true" class="flex gap-3 items-center cursor-pointer">
