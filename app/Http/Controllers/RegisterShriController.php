@@ -107,6 +107,36 @@ class RegisterShriController extends Controller
     }
 
 
+    public function masukUpdate(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'tanggal_masuk' => 'required|date',
+            'asal_pasien' => 'required|string',
+            'kelas_perawatan' => 'required|exists:ruangans,id',
+            'jenis_penjaminan' => 'required|exists:penjaminans,id',
+            'dpjp' => 'required|exists:dpjps,id',
+        ]);
+
+        $shri = Shri::findOrFail($id);
+        $ruangan = Ruangan::find($validated['kelas_perawatan']);
+
+        if (!$ruangan) {
+            return back()->withErrors('Ops, ruangan tidak ditemukan.');
+        }
+
+        $shri->update([
+            'tanggal_masuk' => $validated['tanggal_masuk'],
+            'asal_pasien' => $validated['asal_pasien'],
+            'kelas_perawatan_id' => $ruangan->id,
+            'ruang_perawatan' => $ruangan->nama_ruangan,
+            'jenis_penjaminan_id' => $validated['jenis_penjaminan'],
+            'dpjp_id' => $validated['dpjp'],
+        ]);
+
+        return redirect()->route('register-shri.masuk.view')->with('success', 'Data pasien berhasil diperbarui.');
+    }
+
+
 
 
 
