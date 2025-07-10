@@ -9,7 +9,7 @@
         <!-- Header -->
         <div class="flex justify-between mt-3 bg-[#34495E] p-4 rounded-lg text-white">
             <h2>Daftar Pasien Keluar</h2>
-            <a href="{{ route('routeName', ['id'=>1]) }}" class="flex items-center gap-3">
+            <a href="{{ route('register-shri.keluar.daftar', ['id' => 1]) }}" class="flex items-center gap-3">
                 <i class="fa-solid fa-plus"></i>
                 <span>Tambah</span>
             </a>

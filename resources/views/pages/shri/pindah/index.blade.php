@@ -8,7 +8,7 @@
         <!-- Header Section -->
         <div class="flex justify-between mt-3 bg-[#34495E] p-4 rounded-lg text-white">
             <h2>Daftar Pasien Pindah</h2>
-            <a href="{{ route('pindah.daftar') }} " flex items-center gap-3">
+            <a href="{{ route('register-shri.pindah.daftar') }} " flex items-center gap-3">
                 <i class="fa-solid fa-plus"></i>
                 <span>Tambah</span>
             </a>

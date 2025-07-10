@@ -25,8 +25,16 @@ Route::middleware('auth')->group(function () {
     Route::get('tempat-tidur', [TempatTidurController::class, 'index'])->name('admin.tempat-tidur');
 
     Route::prefix('register-shri')->group(function () {
+        // masuk
         Route::get('masuk', [RegisterShriController::class, 'masukView'])->name('register-shri.masuk.view');
         Route::get('masuk/create', [RegisterShriController::class, 'masukCreate'])->name('register-shri.masuk.create');
+        Route::post('masuk/create', [RegisterShriController::class, 'masukStore'])->name('register-shri.masuk.store');
+        Route::get('masuk/edit/{id}', [RegisterShriController::class, 'masukEdit'])->name('register-shri.masuk.edit');
+        Route::put('masuk/edit/{id}', [RegisterShriController::class, 'masukUpdate'])->name('register-shri.masuk.update');
+        Route::delete('/masuk/{id}', [RegisterShriController::class, 'masukDestroy'])->name('register-shri.masuk.destroy');
+        // end masuk
+
+
 
         Route::get('pindah', [RegisterShriController::class, 'pindahView'])->name('register-shri.pindah.view');
         Route::get('pindah/create', [RegisterShriController::class, 'pindahCreate'])->name('register-shri.pindah.create');

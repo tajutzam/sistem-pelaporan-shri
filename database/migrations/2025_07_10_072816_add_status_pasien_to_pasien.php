@@ -4,20 +4,15 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-use function Laravel\Prompts\table;
-
 return new class extends Migration {
     /**
      * Run the migrations.
      */
     public function up(): void
     {
-        Schema::create('penjaminans', function (Blueprint $table) {
-            $table->id();
-            $table->string('jenis_penjaminan');
-            $table->string('status');
-
-            $table->timestamps();
+        Schema::table('pasiens', function (Blueprint $table) {
+            //
+            $table->string('status_pasien')->default('BARU');
         });
     }
 
@@ -26,6 +21,8 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('penjaminans');
+        Schema::table('pasiens', function (Blueprint $table) {
+            //
+        });
     }
 };

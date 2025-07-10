@@ -3,7 +3,7 @@
 @section('content')
     <h1 class="text-3xl font-bold underline mb-6">Formulir Pendaftaran Pasien Masuk</h1>
 
-    <form action="" method="POST">
+    <form action="{{ route('register-shri.masuk.store', ['id' => 1]) }}" method="POST">
         @csrf
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="space-y-4">
@@ -34,14 +34,14 @@
                     <label for="jenis_kelamin" class="block font-medium">Jenis Kelamin</label>
                     <select name="jenis_kelamin" id="jenis_kelamin" class="w-full border border-gray-300 rounded px-4 py-2">
                         <option value="">Pilih salah satu</option>
-                        <option value="Laki-laki">Laki-laki</option>
+                        <option value="Laki-Laki">Laki-laki</option>
                         <option value="Perempuan">Perempuan</option>
                     </select>
                 </div>
 
                 <div>
                     <label for="status_pasien" class="block font-medium">Status Pasien</label>
-                    <input type="text" name="status_pasien" id="status_pasien"
+                    <input type="text" name="status_pasien" id="status_pasien" value="BARU" readonly
                         class="w-full border border-gray-300 rounded px-4 py-2" />
                 </div>
             </div>
@@ -58,7 +58,8 @@
                     <label for="asal_pasien" class="block font-medium">Asal Pasien</label>
                     <select name="asal_pasien" id="asal_pasien" class="w-full border border-gray-300 rounded px-4 py-2">
                         <option value="">Pilih salah satu</option>
-                        <!-- Tambahkan opsi sesuai data -->
+                        <option value="masuk-langsung">Masuk Langsung</option>
+                        <option value="pindahan-antar-ruangan">Pindahan Antar Ruangan</option>
                     </select>
                 </div>
 
@@ -73,7 +74,11 @@
                     <select name="kelas_perawatan" id="kelas_perawatan"
                         class="w-full border border-gray-300 rounded px-4 py-2">
                         <option value="">Pilih salah satu</option>
-                        <!-- Tambahkan opsi sesuai data -->
+                        @foreach ($ruangans as $item)
+                            <option value="{{ $item->id }}" data-nama="{{ $item->nama_ruangan }}">
+                                {{ $item->kelas_ruangan }}
+                            </option>
+                        @endforeach
                     </select>
                 </div>
 
@@ -82,15 +87,19 @@
                     <select name="jenis_penjaminan" id="jenis_penjaminan"
                         class="w-full border border-gray-300 rounded px-4 py-2">
                         <option value="">Pilih salah satu</option>
-                        <!-- Tambahkan opsi sesuai data -->
+                        @foreach ($jaminans as $item)
+                            <option value="{{$item->id}}">{{$item->jenis_penjaminan}}</option>
+                        @endforeach
                     </select>
                 </div>
-
                 <div>
                     <label for="dpjp" class="block font-medium">DPJP</label>
                     <select name="dpjp" id="dpjp" class="w-full border border-gray-300 rounded px-4 py-2">
                         <option value="">Pilih salah satu</option>
                         <!-- Tambahkan opsi sesuai data -->
+                        @foreach ($dpjps as $item)
+                            <option value="{{$item->id}}">{{$item->nama_lengkap}}</option>
+                        @endforeach
                     </select>
                 </div>
             </div>
@@ -103,3 +112,48 @@
         </div>
     </form>
 @endsection
+
+@push('js')
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('#no_rekam_medis').on('input', function () {
+                let query = $(this).val();
+
+                if (query.length > 2) {
+                    $.ajax({
+                        url: "{{ url('/api/pasien/search') }}",
+                        type: "GET",
+                        data: { term: query },
+                        success: function (response) {
+                            if (response.success && response.data.length === 1) {
+                                let pasien = response.data[0];
+                                $('#nama_pasien').val(pasien.nama_pasien);
+                                $('#tanggal_lahir').val(pasien.tanggal_lahir);
+                                $('#jenis_kelamin').val(pasien.jenis_kelamin);
+                                $('#status_pasien').val('Pasien Lama');
+                            } else {
+                                $('#nama_pasien').val('');
+                                $('#tanggal_lahir').val('');
+                                $('#jenis_kelamin').val('');
+                                $('#status_pasien').val('BARU');
+                            }
+                        },
+                        error: function () {
+                            console.error('Gagal mengambil data pasien');
+                        }
+                    });
+                }
+            });
+
+
+            $('#kelas_perawatan').on('change', function () {
+                const selectedOption = $(this).find('option:selected');
+                const namaRuangan = selectedOption.data('nama') || '';
+
+                $('#ruang_perawatan').val(namaRuangan);
+            });
+
+        });
+    </script>
+@endpush

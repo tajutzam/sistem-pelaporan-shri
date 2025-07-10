@@ -64,4 +64,27 @@ class PasienController extends Controller
 
         return back()->with('success', 'Pasien berhasil dihapus');
     }
+
+    // api
+    public function search(Request $request)
+    {
+        $term = $request->query('term');
+
+        if (!$term) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Parameter "term" diperlukan.'
+            ], 400);
+        }
+
+        $pasiens = Pasien::where('no_rekam_medis', 'LIKE', "%{$term}%")
+            ->select('no_rekam_medis', 'nama_pasien', 'tanggal_lahir', 'jenis_kelamin')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $pasiens
+        ]);
+    }
+
 }
