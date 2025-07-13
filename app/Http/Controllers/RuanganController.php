@@ -73,4 +73,12 @@ class RuanganController extends Controller
 
         return back()->with('success', 'Ruangan berhasil dihapus');
     }
+
+    public function getByKelas($kelas)
+    {
+        $ruangans = Ruangan::where('kelas_ruangan', $kelas)
+            ->where('status', 'tersedia')
+            ->get(['id', 'nama_ruangan']);
+        return response()->json($ruangans);
+    }
 }

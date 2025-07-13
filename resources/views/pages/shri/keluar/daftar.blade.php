@@ -18,20 +18,21 @@
         </div>
 
         <!-- Modal -->
-        <div x-show="open" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-8"
+        <div x-show="open" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0"
             x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200"
             x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-            class="fixed inset-0 z-50 flex items-center justify-center" style="background-color: rgba(0, 0, 0, 0.50)"
+            class="fixed inset-0 z-50 flex items-center justify-center" style="background-color: rgba(0, 0, 0, 0.5)"
             x-cloak>
+
             <div class="bg-gray-100 p-6 rounded-lg w-full max-w-4xl relative">
-                <h2 class="text-lg font-semibold underline mb-4">Formulir Pendaftaran Pasien Pindah</h2>
+                <h2 class="text-lg font-semibold underline mb-4">Formulir Pendaftaran Pasien Keluar</h2>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label>No. Rekam Medis</label>
                         <input type="text" class="w-full bg-gray-300 p-2 rounded" disabled />
                     </div>
                     <div>
-                        <label>Tanggal Pindah</label>
+                        <label>Tanggal Keluar</label>
                         <input type="date" class="w-full p-2 rounded border" />
                     </div>
                     <div>
@@ -39,10 +40,12 @@
                         <input type="text" class="w-full bg-gray-300 p-2 rounded" disabled />
                     </div>
                     <div>
-                        <label>Ruangan Tujuan</label>
+                        <label>DPJP</label>
                         <select class="w-full p-2 rounded border">
                             <option>Pilih salah satu</option>
-                            <option>Ruang NICU</option>
+                            @foreach ($dpjps as $item)
+                                <option value="{{$item->id}}">{{$item->nama_lengkap}}</option>
+                            @endforeach
                         </select>
                     </div>
                     <div>
@@ -50,11 +53,12 @@
                         <input type="text" class="w-full bg-gray-300 p-2 rounded" disabled />
                     </div>
                     <div>
-                        <label>Kelas Tujuan</label>
+                        <label>Diagnosa Akhir</label>
                         <select class="w-full p-2 rounded border">
                             <option>Pilih salah satu</option>
-                            <option>Kelas I</option>
-                            <option>Kelas II</option>
+                            @foreach ($diagnosas as $item)
+                                <option value="{{$item->id}}">{{$item->kode_icd}} - {{$item->diagnosa}}</option>
+                            @endforeach
                         </select>
                     </div>
                     <div>
@@ -62,11 +66,20 @@
                         <input type="text" class="w-full bg-gray-300 p-2 rounded" disabled />
                     </div>
                     <div>
-                        <label>Lama Dirawat</label>
+                        <label>Cara Keluar</label>
+                        <select class="w-full p-2 rounded border">
+                            <option>Pilih salah satu</option>
+                            @foreach (config('data.cara_keluar') as $item)
+                                <option>{{$item}}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label>Ruangan</label>
                         <input type="text" class="w-full bg-gray-300 p-2 rounded" disabled />
                     </div>
-                    <div class="col-span-2">
-                        <label>Ruangan</label>
+                    <div>
+                        <label>Lama Dirawat</label>
                         <input type="text" class="w-full bg-gray-300 p-2 rounded" disabled />
                     </div>
                 </div>
@@ -77,8 +90,8 @@
             </div>
         </div>
 
-        <!-- Search Bar -->
 
+        <!-- Search Bar -->
 
         <!-- Tabel Pasien Pindah -->
         <div class="overflow-x-auto mt-6">

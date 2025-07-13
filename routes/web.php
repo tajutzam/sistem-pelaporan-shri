@@ -39,9 +39,13 @@ Route::middleware('auth')->group(function () {
         Route::get('pindah', [RegisterShriController::class, 'pindahView'])->name('register-shri.pindah.view');
         Route::get('pindah/create', [RegisterShriController::class, 'pindahCreate'])->name('register-shri.pindah.create');
         Route::get('pindah/daftar', [RegisterShriController::class, 'daftarPasienDirawatPindah'])->name('register-shri.pindah.daftar');
+        Route::post("/pindah", [RegisterShriController::class, "pindahStore"])->name('register-shri.pindah.store');
+        Route::delete("/pindah/{id}", [RegisterShriController::class, "pindahDestroy"])->name('register-shri.pindah.destroy');
+        Route::get('/pindah/{id}', [RegisterShriController::class, "pindahEdit"])->name('register-shri.pindah.edit');
+        Route::put('/pindah/{id}', [RegisterShriController::class, "pindahUpdate"])->name('register-shri.pindah.update');
 
         Route::get('keluar', [RegisterShriController::class, 'keluarView'])->name('register-shri.keluar.view');
-        Route::get('keluar/daftar', [RegisterShriController::class, 'daftarPasienDirawatPindah'])->name('register-shri.keluar.daftar');
+        Route::get('keluar/daftar', [RegisterShriController::class, 'daftarPasienDirawatKeluar'])->name('register-shri.keluar.daftar');
     });
 
     Route::prefix('laporan')->group(function () {

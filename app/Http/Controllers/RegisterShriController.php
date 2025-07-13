@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Diagnosa;
 use App\Models\Dpjp;
 use App\Models\Pasien;
 use App\Models\Penjaminan;
 use App\Models\Ruangan;
 use App\Models\Shri;
+use App\Models\ShriPindah;
 use Illuminate\Http\Request;
 
 class RegisterShriController extends Controller
@@ -140,10 +142,23 @@ class RegisterShriController extends Controller
 
 
 
-    public function pindahView()
+    public function pindahView(Request $request)
     {
-        return view("pages.shri.pindah.index");
+        $query = ShriPindah::with(['shri.pasien', 'kelas']);
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->whereHas('shri.pasien', function ($q) use ($search) {
+                $q->where('nama_pasien', 'like', '%' . $search . '%')
+                    ->orWhere('no_rekam_medis', 'like', '%' . $search . '%');
+            });
+        }
+
+        $pindahs = $query->get();
+
+        return view("pages.shri.pindah.index", compact('pindahs'));
     }
+
 
 
     public function keluarView()
@@ -158,12 +173,87 @@ class RegisterShriController extends Controller
 
     public function daftarPasienDirawatPindah()
     {
-        return view("pages.shri.pindah.daftar");
+        $dirawats = Shri::where('status', 'masuk')->with('pasien', 'dpjp', 'kelasPerawatan', 'jenisPenjaminan')->get();
+        return view("pages.shri.pindah.daftar", compact('dirawats'));
     }
 
     public function daftarPasienDirawatKeluar()
     {
+        $dirawats = Shri::where('status', 'keluar')->with('pasien', 'dpjp', 'kelasPerawatan', 'jenisPenjaminan')->get();
+        $dpjps = Dpjp::all();
+        $diagnosas = Diagnosa::all();
+        return view("pages.shri.keluar.daftar", compact('dirawats', 'dpjps', 'diagnosas'));
+    }
 
+    public function pindahStore(Request $request)
+    {
+        $validated = $request->validate(
+            [
+                'nama_ruangan_tujuan' => 'required|exists:ruangans,nama_ruangan',
+                'tanggal_pindah' => 'required',
+                'lama_dirawat' => 'required',
+                'id' => 'required|exists:shris,id'
+            ]
+        );
+
+        $ruangan = Ruangan::where('nama_ruangan', $validated['nama_ruangan_tujuan'])->first();
+
+        $created = ShriPindah::create(
+            [
+                'kelas_perawatan_id' => $ruangan->id,
+                'lama_dirawat' => $validated['lama_dirawat'],
+                'tanggal_pindah' => $validated['tanggal_pindah'],
+                'shri_id' => $validated['id']
+            ]
+        );
+        if ($created) {
+            $shri = Shri::findOrFail($validated['id']);
+            $shri->update(
+                [
+                    'status' => 'pindah'
+                ]
+            );
+            return redirect()->route('register-shri.pindah.view')->with('success', 'Berhasil memindahkan pasien');
+        }
+
+        return redirect()->back()->withErrors('gagal memindahkan pasien');
+    }
+
+    public function pindahDestroy($id)
+    {
+        $shri = ShriPindah::findOrFail($id)->delete();
+
+        return redirect()->back()->with('success', 'berhasil menghapus data pasien pindah!');
+
+    }
+
+    public function pindahEdit($id)
+    {
+        $pindah = ShriPindah::with('shri', 'kelas')->findOrFail($id);
+        return view('pages.shri.pindah.edit', compact('pindah'));
+
+    }
+
+    public function pindahUpdate(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'id' => 'required|exists:shri_pindah,id',
+            'tanggal_pindah' => 'required|date',
+            'kelas_perawatan_id' => 'required',
+            'ruangan_tujuan' => 'required|exists:ruangans,nama_ruangan',
+            'lama_dirawat' => 'required|numeric',
+        ]);
+
+        $ruangan = Ruangan::where('nama_ruangan', $validated['ruangan_tujuan'])->first();
+
+        $pindah = ShriPindah::findOrFail($validated['id']);
+        $pindah->update([
+            'kelas_perawatan_id' => $ruangan->id,
+            'tanggal_pindah' => $validated['tanggal_pindah'],
+            'lama_dirawat' => $validated['lama_dirawat'],
+        ]);
+
+        return redirect()->route('register-shri.pindah.view')->with('success', 'Data pindah pasien berhasil diperbarui');
     }
 
 

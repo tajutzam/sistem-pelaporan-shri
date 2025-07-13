@@ -82,7 +82,12 @@
                     <input type="text" name="nama_ruangan" class="w-full border rounded px-3 py-2 mb-2" required>
 
                     <label class="block text-sm font-medium mb-1">Kelas Ruangan</label>
-                    <input type="text" name="kelas_ruangan" class="w-full border rounded px-3 py-2 mb-2" required>
+                    <select name="kelas_ruangan" class="w-full border rounded px-3 py-2 mb-2" " required>
+                                <option value="">Pilih Kelas</option>
+                                @foreach (config('ruangan.kelas_ruangan') as $kelas)
+                                    <option value=" {{ $kelas }}">{{ $kelas }}</option>
+                                @endforeach
+                    </select>
 
                     <label class="block text-sm font-medium mb-1">Jumlah Tempat Tidur</label>
                     <input type="number" name="jumlah_tempat_tidur" class="w-full border rounded px-3 py-2 mb-2" min="1"
@@ -121,8 +126,13 @@
                         x-model="editRuangan.nama_ruangan" required>
 
                     <label class="block text-sm font-medium mb-1">Kelas Ruangan</label>
-                    <input type="text" name="kelas_ruangan" class="w-full border rounded px-3 py-2 mb-2"
+                    <select name="kelas_ruangan" class="w-full border rounded px-3 py-2 mb-2"
                         x-model="editRuangan.kelas_ruangan" required>
+                        <option value="">Pilih Kelas</option>
+                        @foreach (config('ruangan.kelas_ruangan') as $kelas)
+                            <option value="{{ $kelas }}">{{ $kelas }}</option>
+                        @endforeach
+                    </select>
 
                     <label class="block text-sm font-medium mb-1">Jumlah Tempat Tidur</label>
                     <input type="number" name="jumlah_tempat_tidur" min="1" class="w-full border rounded px-3 py-2 mb-2"
