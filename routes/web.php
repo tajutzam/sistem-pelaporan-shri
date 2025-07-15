@@ -35,7 +35,7 @@ Route::middleware('auth')->group(function () {
         // end masuk
 
 
-
+        // start pindah
         Route::get('pindah', [RegisterShriController::class, 'pindahView'])->name('register-shri.pindah.view');
         Route::get('pindah/create', [RegisterShriController::class, 'pindahCreate'])->name('register-shri.pindah.create');
         Route::get('pindah/daftar', [RegisterShriController::class, 'daftarPasienDirawatPindah'])->name('register-shri.pindah.daftar');
@@ -43,9 +43,17 @@ Route::middleware('auth')->group(function () {
         Route::delete("/pindah/{id}", [RegisterShriController::class, "pindahDestroy"])->name('register-shri.pindah.destroy');
         Route::get('/pindah/{id}', [RegisterShriController::class, "pindahEdit"])->name('register-shri.pindah.edit');
         Route::put('/pindah/{id}', [RegisterShriController::class, "pindahUpdate"])->name('register-shri.pindah.update');
+        // end pindah
 
+        // start keluar
         Route::get('keluar', [RegisterShriController::class, 'keluarView'])->name('register-shri.keluar.view');
         Route::get('keluar/daftar', [RegisterShriController::class, 'daftarPasienDirawatKeluar'])->name('register-shri.keluar.daftar');
+        Route::post("keluar/daftar", [RegisterShriController::class, "keluarStore"])->name('register-shri.keluar.store');
+        Route::delete("keluar/daftar/destroy/{id}" , [RegisterShriController::class , "keluarDestroy"])->name('register-shri.keluar.destroy');
+        Route::put("keluar/update/{id}" , [RegisterShriController::class , "keluarUpdate"])->name('register-shri.keluar.update');
+
+        // end keluar
+
     });
 
     Route::prefix('laporan')->group(function () {

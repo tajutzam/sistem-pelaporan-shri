@@ -32,4 +32,10 @@ class Shri extends Model
         return $this->belongsTo(Penjaminan::class, 'jenis_penjaminan_id', 'id');
     }
 
+
+    public function pindah()
+    {
+        return $this->hasOne(ShriPindah::class, "shri_id", "id");
+    }
+
 }

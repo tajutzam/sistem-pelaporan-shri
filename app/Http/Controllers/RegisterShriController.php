@@ -8,6 +8,7 @@ use App\Models\Pasien;
 use App\Models\Penjaminan;
 use App\Models\Ruangan;
 use App\Models\Shri;
+use App\Models\ShriKeluar;
 use App\Models\ShriPindah;
 use Illuminate\Http\Request;
 
@@ -137,9 +138,12 @@ class RegisterShriController extends Controller
 
         return redirect()->route('register-shri.masuk.view')->with('success', 'Data pasien berhasil diperbarui.');
     }
+    // end masuk
 
 
 
+
+    // start pindah
 
 
     public function pindahView(Request $request)
@@ -160,10 +164,10 @@ class RegisterShriController extends Controller
     }
 
 
-
-    public function keluarView()
+    public function daftarPasienDirawatPindah()
     {
-        return view("pages.shri.keluar.index");
+        $dirawats = Shri::where('status', 'masuk')->with('pasien', 'dpjp', 'kelasPerawatan', 'jenisPenjaminan')->get();
+        return view("pages.shri.pindah.daftar", compact('dirawats'));
     }
 
     public function pindahCreate()
@@ -171,19 +175,6 @@ class RegisterShriController extends Controller
         return view('pages.shri.pindah.create');
     }
 
-    public function daftarPasienDirawatPindah()
-    {
-        $dirawats = Shri::where('status', 'masuk')->with('pasien', 'dpjp', 'kelasPerawatan', 'jenisPenjaminan')->get();
-        return view("pages.shri.pindah.daftar", compact('dirawats'));
-    }
-
-    public function daftarPasienDirawatKeluar()
-    {
-        $dirawats = Shri::where('status', 'keluar')->with('pasien', 'dpjp', 'kelasPerawatan', 'jenisPenjaminan')->get();
-        $dpjps = Dpjp::all();
-        $diagnosas = Diagnosa::all();
-        return view("pages.shri.keluar.daftar", compact('dirawats', 'dpjps', 'diagnosas'));
-    }
 
     public function pindahStore(Request $request)
     {
@@ -221,7 +212,16 @@ class RegisterShriController extends Controller
 
     public function pindahDestroy($id)
     {
-        $shri = ShriPindah::findOrFail($id)->delete();
+        $shri = ShriPindah::findOrFail($id);
+
+
+        Shri::findOrFail($shri->shri_id)->update(
+            [
+                'status' => 'masuk'
+            ]
+        );
+
+        $shri->delete();
 
         return redirect()->back()->with('success', 'berhasil menghapus data pasien pindah!');
 
@@ -255,7 +255,105 @@ class RegisterShriController extends Controller
 
         return redirect()->route('register-shri.pindah.view')->with('success', 'Data pindah pasien berhasil diperbarui');
     }
+    // end pindah
 
+
+    // start keluar
+    public function keluarView()
+    {
+        $shris = ShriKeluar::with('shri', 'dpjp', 'diagnosa')->get();
+        $dpjps = Dpjp::all();
+        $diagnosas = Diagnosa::all();
+
+        return view("pages.shri.keluar.index", compact('shris', 'dpjps', 'diagnosas'));
+    }
+
+    public function daftarPasienDirawatKeluar()
+    {
+        $dirawats = Shri::whereIn('status', ['masuk', 'pindah'])
+            ->with('pasien', 'dpjp', 'kelasPerawatan', 'jenisPenjaminan', 'pindah', 'pindah.kelas')->get();
+        $dpjps = Dpjp::all();
+        $diagnosas = Diagnosa::all();
+        return view("pages.shri.keluar.daftar", compact('dirawats', 'dpjps', 'diagnosas'));
+    }
+
+    public function keluarStore(Request $request)
+    {
+        $validated = $request->validate(
+            [
+                'shri_id' => 'required',
+                'tanggal_keluar' => 'required|date',
+                'dpjp_id' => 'required|exists:dpjps,id',
+                'diagnosa_id' => 'required|exists:diagnosas,id',
+                'cara_keluar' => 'required',
+                'lama_dirawat' => 'required'
+            ]
+        );
+
+        $shri = Shri::findOrFail($validated['shri_id'])->update(
+            [
+                'status' => 'keluar'
+            ]
+        );
+
+        ShriKeluar::create(
+            [
+                'shri_id' => $validated['shri_id'],
+                'dpjp_id' => $validated['dpjp_id'],
+                'cara_keluar' => $validated['cara_keluar'],
+                'lama_dirawat' => $validated['lama_dirawat'],
+                'tanggal_keluar' => $validated['tanggal_keluar'],
+                'diagnosa_id' => $validated['diagnosa_id']
+            ]
+        );
+
+        return redirect()->route('register-shri.keluar.view')->with('success', 'berhasil mengeluarkan pasien!');
+    }
+
+    public function keluarUpdate(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'tanggal_keluar' => 'required|date',
+            'dpjp_id' => 'required|exists:dpjps,id',
+            'diagnosa_id' => 'required|exists:diagnosas,id',
+            'cara_keluar' => 'required',
+            'lama_dirawat' => 'required'
+        ]);
+
+        $shriKeluar = ShriKeluar::findOrFail($id);
+
+        // Update data pasien keluar
+        $shriKeluar->update([
+            'tanggal_keluar' => $validated['tanggal_keluar'],
+            'dpjp_id' => $validated['dpjp_id'],
+            'diagnosa_id' => $validated['diagnosa_id'],
+            'cara_keluar' => $validated['cara_keluar'],
+            'lama_dirawat' => $validated['lama_dirawat']
+        ]);
+
+        $shriKeluar->shri()->update(['status' => 'keluar']);
+
+        return redirect()->route('register-shri.keluar.view')->with('success', 'Data pasien keluar berhasil diperbarui!');
+    }
+
+
+    public function keluarDestroy($id)
+    {
+
+        $shriKeluar = ShriKeluar::findOrFail($id);
+
+
+        $shriKeluar->shri()->update(
+            [
+                'status' => 'masuk'
+            ]
+        );
+
+        $shriKeluar->delete();
+
+        return redirect()->route('register-shri.keluar.view')->with('success', 'berhasil menghapus data pasien keluar');
+
+    }
 
 
 }
