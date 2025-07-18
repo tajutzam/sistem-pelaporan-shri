@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Services\ShriReportService;
 use App\Models\Diagnosa;
 use App\Models\Ruangan;
+use App\Models\Shri;
 use App\Models\ShriKeluar;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -284,7 +285,10 @@ class LaporanController extends Controller
 
     public function indikatorPelayanan()
     {
-        return view('pages.laporan.indikator_pelayanan');
+        $shris = Shri::get();
+
+
+        dd($shris);
     }
 
     public function tenDiagnosaPenyakit(Request $request)
@@ -360,6 +364,250 @@ class LaporanController extends Controller
     }
 
 
+
+    public function getLaporanBOR(Request $request)
+    {
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+        $ruanganId = $request->input('ruangan_id');
+
+        $startDate = $startDate ? Carbon::parse($startDate)->startOfDay() : Carbon::now()->startOfMonth()->startOfDay();
+        $endDate = $endDate ? Carbon::parse($endDate)->endOfDay() : Carbon::now()->endOfDay();
+
+        // Validasi input tanggal
+        if (empty($startDate) || empty($endDate)) {
+            return response()->json([
+                'error' => 'Tanggal mulai dan tanggal akhir harus diisi',
+                'received' => [
+                    'start_date' => $startDate,
+                    'end_date' => $endDate
+                ]
+            ], 400);
+        }
+
+        // Hitung jumlah hari dalam periode
+        $jumlahPeriode = Carbon::parse($startDate)->diffInDays(Carbon::parse($endDate)) + 1;
+
+        // Validasi input tanggal
+        if (empty($startDate) || empty($endDate)) {
+            return response()->json(['error' => 'Tanggal mulai dan tanggal akhir harus diisi'], 400);
+        }
+
+        $query = DB::table('ruangans as r')
+            ->leftJoin('shris as s', function ($join) use ($startDate, $endDate) {
+                $join->on('r.id', '=', 's.kelas_perawatan_id')
+                    ->where(function ($q) use ($startDate, $endDate) {
+                        $q->whereBetween('s.tanggal_masuk', [$startDate, $endDate])
+                            ->orWhere('s.tanggal_masuk', '<=', $endDate);
+                    });
+            })
+            ->leftJoin('shri_keluar as sk', function ($join) use ($startDate, $endDate) {
+                $join->on('s.id', '=', 'sk.shri_id')
+                    ->whereBetween('sk.tanggal_keluar', [$startDate, $endDate]);
+            })
+            ->leftJoin('shri_pindah as sp', function ($join) use ($startDate, $endDate) {
+                $join->on('s.id', '=', 'sp.shri_id')
+                    ->whereBetween('sp.tanggal_pindah', [$startDate, $endDate]);
+            })
+            ->select([
+                'r.id as ruangan_id',
+                'r.nama_ruangan',
+                'r.jumlah_tempat_tidur',
+                DB::raw($jumlahPeriode . ' as jumlah_periode'),
+
+                // Jumlah hari perawatan (untuk BOR)
+                DB::raw('COALESCE(SUM(
+                    CASE
+                        WHEN s.status = "keluar" AND sk.tanggal_keluar IS NOT NULL
+                        THEN DATEDIFF(sk.tanggal_keluar, s.tanggal_masuk) + 1
+                        WHEN s.status = "pindah" AND sp.tanggal_pindah IS NOT NULL
+                        THEN DATEDIFF(sp.tanggal_pindah, s.tanggal_masuk) + 1
+                        WHEN s.status = "masuk" AND s.tanggal_masuk <= ?
+                        THEN DATEDIFF(?, s.tanggal_masuk) + 1
+                        ELSE 0
+                    END
+                ), 0) as jumlah_hari_perawatan'),
+
+                // Total lama dirawat (untuk AvLOS)
+                DB::raw('COALESCE(SUM(
+                    CASE
+                        WHEN s.status = "keluar" AND sk.tanggal_keluar IS NOT NULL
+                        THEN CAST(REPLACE(sk.lama_dirawat, " hari", "") AS UNSIGNED)
+                        ELSE 0
+                    END
+                ), 0) as total_lama_dirawat'),
+
+                // Pasien keluar hidup
+                DB::raw('COALESCE(SUM(
+                    CASE
+                        WHEN s.status = "keluar" AND sk.tanggal_keluar IS NOT NULL
+                        AND sk.cara_keluar NOT IN ("meninggal", "mati")
+                        THEN 1
+                        ELSE 0
+                    END
+                ), 0) as pasien_keluar_hidup'),
+
+                // Pasien keluar mati
+                DB::raw('COALESCE(SUM(
+                    CASE
+                        WHEN s.status = "keluar" AND sk.tanggal_keluar IS NOT NULL
+                        AND sk.cara_keluar IN ("meninggal", "mati")
+                        THEN 1
+                        ELSE 0
+                    END
+                ), 0) as pasien_keluar_mati'),
+
+                // Total pasien keluar
+                DB::raw('COALESCE(SUM(
+                    CASE
+                        WHEN s.status = "keluar" AND sk.tanggal_keluar IS NOT NULL
+                        THEN 1
+                        ELSE 0
+                    END
+                ), 0) as total_pasien_keluar')
+            ])
+            ->addBinding([$endDate, $endDate], 'select');
+
+        if ($ruanganId) {
+            $query->where('r.id', $ruanganId);
+        }
+
+        $data = $query->groupBy('r.id', 'r.nama_ruangan', 'r.jumlah_tempat_tidur')->get();
+
+        // Hitung indikator untuk setiap ruangan
+        $results = $data->map(function ($item) {
+            $jumlahTempatTidur = $item->jumlah_tempat_tidur;
+            $jumlahPeriode = $item->jumlah_periode;
+            $jumlahHariPerawatan = $item->jumlah_hari_perawatan;
+            $totalLamaRawat = $item->total_lama_dirawat;
+            $pasienKeluarHidup = $item->pasien_keluar_hidup;
+            $pasienKeluarMati = $item->pasien_keluar_mati;
+            $totalPasienKeluar = $item->total_pasien_keluar;
+
+            // Perhitungan BOR (Bed Occupancy Rate)
+            $bor = ($jumlahTempatTidur > 0 && $jumlahPeriode > 0)
+                ? ($jumlahHariPerawatan / ($jumlahTempatTidur * $jumlahPeriode)) * 100
+                : 0;
+
+            // Perhitungan AvLOS (Average Length of Stay)
+            $avlos = ($totalPasienKeluar > 0)
+                ? $totalLamaRawat / $totalPasienKeluar
+                : 0;
+
+            // Perhitungan BTO (Bed Turn Over)
+            $bto = ($jumlahTempatTidur > 0)
+                ? $totalPasienKeluar / $jumlahTempatTidur
+                : 0;
+
+            // Perhitungan TOI (Turn Over Interval)
+            $toi = ($totalPasienKeluar > 0)
+                ? (($jumlahTempatTidur * $jumlahPeriode) - $jumlahHariPerawatan) / $totalPasienKeluar
+                : 0;
+
+            // Perhitungan GDR (Gross Death Rate)
+            $gdr = ($totalPasienKeluar > 0)
+                ? ($pasienKeluarMati / $totalPasienKeluar) * 100
+                : 0;
+
+            // Perhitungan NDR (Net Death Rate)
+            $ndr = ($totalPasienKeluar > 0)
+                ? ($pasienKeluarMati / $totalPasienKeluar) * 100
+                : 0;
+
+            return [
+                'ruangan_id' => $item->ruangan_id,
+                'nama_ruangan' => $item->nama_ruangan,
+                'jumlah_tempat_tidur' => $jumlahTempatTidur,
+                'jumlah_periode' => $jumlahPeriode,
+                'jumlah_hari_perawatan' => $jumlahHariPerawatan,
+                'total_lama_dirawat' => $totalLamaRawat,
+                'pasien_keluar_hidup' => $pasienKeluarHidup,
+                'pasien_keluar_mati' => $pasienKeluarMati,
+                'total_pasien_keluar' => $totalPasienKeluar,
+                'bor' => round($bor, 2),
+                'avlos' => round($avlos, 2),
+                'bto' => round($bto, 2),
+                'toi' => round($toi, 2),
+                'gdr' => round($gdr, 2),
+                'ndr' => round($ndr, 2),
+            ];
+        });
+
+        $data = [
+            'success' => true,
+            'data' => $results,
+            'periode' => [
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+                'jumlah_hari' => $jumlahPeriode,
+                'default_used' => $request->input('start_date') ? false : true
+            ]
+        ];
+
+
+        return view('pages.laporan.indikator_pelayanan', compact('data'));
+
+    }
+
+    // Method untuk mendapatkan data ruangan saja
+    public function getRuangans()
+    {
+        $ruangans = DB::table('ruangans')
+            ->select('id', 'nama_ruangan', 'kelas_ruangan', 'jumlah_tempat_tidur', 'status')
+            ->where('status', 'aktif') // assuming ada status aktif
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $ruangans
+        ]);
+    }
+
+    // Method untuk mendapatkan data berdasarkan bulan dan tahun
+    public function getLaporanByBulan(Request $request)
+    {
+        $bulan = $request->input('bulan'); // 1-12
+        $tahun = $request->input('tahun', date('Y'));
+
+        // Validasi input
+        if (empty($bulan) || $bulan < 1 || $bulan > 12) {
+            return response()->json([
+                'error' => 'Bulan tidak valid. Gunakan angka 1-12',
+                'received' => [
+                    'bulan' => $bulan,
+                    'tahun' => $tahun
+                ]
+            ], 400);
+        }
+
+        // Buat tanggal mulai dan akhir bulan
+        $startDate = sprintf('%04d-%02d-01', $tahun, $bulan);
+        $endDate = date('Y-m-t', strtotime($startDate)); // Tanggal terakhir bulan
+
+        // Merge ke request
+        $request->merge([
+            'start_date' => $startDate,
+            'end_date' => $endDate
+        ]);
+
+        return $this->getLaporanBOR($request);
+    }
+
+    // Method untuk mendapatkan data berdasarkan tahun penuh
+    public function getLaporanByTahun(Request $request)
+    {
+        $tahun = $request->input('tahun', date('Y'));
+
+        $startDate = $tahun . '-01-01';
+        $endDate = $tahun . '-12-31';
+
+        $request->merge([
+            'start_date' => $startDate,
+            'end_date' => $endDate
+        ]);
+
+        return $this->getLaporanBOR($request);
+    }
 
 
 

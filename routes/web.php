@@ -63,7 +63,7 @@ Route::middleware('auth')->group(function () {
         Route::get('rekapitulasi', [LaporanController::class, 'rekapitulasi'])->name('laporan.rekapitulasi');
         Route::get('rekapitulasi/cetak', [LaporanController::class, "exportRekapitulasi"])->name('laporan.rekapitulasi.cetak');
 
-        Route::get("indikator-pelayanan", [LaporanController::class, "indikatorPelayanan"])->name('laporan-indikator');
+        Route::get("indikator-pelayanan", [LaporanController::class, "getLaporanBOR"])->name('laporan-indikator');
         Route::get("10-penyakit", [LaporanController::class, "tenDiagnosaPenyakit"])->name('laporan-10-penyakit');
 
     });
