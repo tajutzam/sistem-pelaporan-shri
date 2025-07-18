@@ -11,4 +11,11 @@ class Diagnosa extends Model
         'diagnosa',
         'kode_icd',
     ];
+
+
+    public function keluars()
+    {
+        return $this->hasMany(ShriKeluar::class, "diagnosa_id", "id");
+    }
+
 }

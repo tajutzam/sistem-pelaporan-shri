@@ -49,8 +49,8 @@ Route::middleware('auth')->group(function () {
         Route::get('keluar', [RegisterShriController::class, 'keluarView'])->name('register-shri.keluar.view');
         Route::get('keluar/daftar', [RegisterShriController::class, 'daftarPasienDirawatKeluar'])->name('register-shri.keluar.daftar');
         Route::post("keluar/daftar", [RegisterShriController::class, "keluarStore"])->name('register-shri.keluar.store');
-        Route::delete("keluar/daftar/destroy/{id}" , [RegisterShriController::class , "keluarDestroy"])->name('register-shri.keluar.destroy');
-        Route::put("keluar/update/{id}" , [RegisterShriController::class , "keluarUpdate"])->name('register-shri.keluar.update');
+        Route::delete("keluar/daftar/destroy/{id}", [RegisterShriController::class, "keluarDestroy"])->name('register-shri.keluar.destroy');
+        Route::put("keluar/update/{id}", [RegisterShriController::class, "keluarUpdate"])->name('register-shri.keluar.update');
 
         // end keluar
 
@@ -58,8 +58,10 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('laporan')->group(function () {
         Route::get('kunjungan', [LaporanController::class, 'laporanKunjungan'])->name('laporan.kunjungan');
-        Route::get('rekapitulasi', [LaporanController::class, 'rekapitulasi'])->name('laporan.rekapitulasi');
+        Route::get('kunjungan/cetak', [LaporanController::class, 'cetakLaporanKunjungan'])->name('laporan.kunjungan.cetak');
 
+        Route::get('rekapitulasi', [LaporanController::class, 'rekapitulasi'])->name('laporan.rekapitulasi');
+        Route::get('rekapitulasi/cetak', [LaporanController::class, "exportRekapitulasi"])->name('laporan.rekapitulasi.cetak');
 
         Route::get("indikator-pelayanan", [LaporanController::class, "indikatorPelayanan"])->name('laporan-indikator');
         Route::get("10-penyakit", [LaporanController::class, "tenDiagnosaPenyakit"])->name('laporan-10-penyakit');

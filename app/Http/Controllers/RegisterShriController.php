@@ -103,6 +103,7 @@ class RegisterShriController extends Controller
             'ruang_perawatan' => $ruangan->nama_ruangan,
             'kelas_perawatan_id' => $ruangan->id,
             'jenis_penjaminan_id' => $validated['jenis_penjaminan'],
+            'status_pasien' => $validated['status_pasien']
         ]);
 
         return redirect()->route('register-shri.masuk.view')->with('success', 'Pasien berhasil didaftarkan.');

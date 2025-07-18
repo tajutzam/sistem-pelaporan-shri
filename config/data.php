@@ -2,8 +2,8 @@
 
 return [
     'cara_keluar' => [
-        'Pasien Keluar APS',
-        'Pasien Keluar APD',
+        'APS',
+        'APD',
         'Mati ≥ 48 Jam',
         'Mati ≤ 48 Jam',
     ],
