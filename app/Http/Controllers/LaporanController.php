@@ -374,6 +374,20 @@ class LaporanController extends Controller
         $startDate = $startDate ? Carbon::parse($startDate)->startOfDay() : Carbon::now()->startOfMonth()->startOfDay();
         $endDate = $endDate ? Carbon::parse($endDate)->endOfDay() : Carbon::now()->endOfDay();
 
+
+        $data = $this->getLaporanIndikator($startDate, $endDate, $ruanganId);
+
+
+        return view('pages.laporan.indikator_pelayanan', compact('data'));
+
+    }
+
+
+    private function getLaporanIndikator($startDate, $endDate, $ruanganId)
+    {
+        $startDate = $startDate ? Carbon::parse($startDate)->startOfDay() : Carbon::now()->startOfMonth()->startOfDay();
+        $endDate = $endDate ? Carbon::parse($endDate)->endOfDay() : Carbon::now()->endOfDay();
+
         // Validasi input tanggal
         if (empty($startDate) || empty($endDate)) {
             return response()->json([
@@ -533,20 +547,16 @@ class LaporanController extends Controller
             ];
         });
 
-        $data = [
+        return [
             'success' => true,
             'data' => $results,
             'periode' => [
                 'start_date' => $startDate,
                 'end_date' => $endDate,
-                'jumlah_hari' => $jumlahPeriode,
-                'default_used' => $request->input('start_date') ? false : true
+                'jumlah_hari' => round($jumlahPeriode),
+                'default_used' => $startDate ? false : true
             ]
         ];
-
-
-        return view('pages.laporan.indikator_pelayanan', compact('data'));
-
     }
 
     // Method untuk mendapatkan data ruangan saja
@@ -608,6 +618,67 @@ class LaporanController extends Controller
 
         return $this->getLaporanBOR($request);
     }
+
+    public function perviewLaporanIndikatorPelayanan(Request $request)
+    {
+        $request->validate([
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+        ]);
+
+
+
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+        $ruanganId = $request->input('ruangan_id');
+
+        $startDate = $startDate ? Carbon::parse($startDate)->startOfDay() : Carbon::now()->startOfMonth()->startOfDay();
+        $endDate = $endDate ? Carbon::parse($endDate)->endOfDay() : Carbon::now()->endOfDay();
+
+        $data = $this->getLaporanIndikator($startDate, $endDate, $ruanganId);
+
+        $pdf = Pdf::loadView('pages.laporan.indikator-pdf', [
+            'data' => $data,
+            'start_date' => $startDate,
+            'end_date' => $endDate
+        ]);
+
+        $pdf->setPaper('A4', 'landscape');
+
+        return $pdf->stream('laporan-indikator-' . $startDate . '-to-' . $endDate . '.pdf');
+    }
+
+    public function exportLaporanIndikatorPelayanan(Request $request)
+    {
+        $request->validate([
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+        ]);
+
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+        $ruanganId = $request->input('ruangan_id');
+
+        $startDate = $startDate ? Carbon::parse($startDate)->startOfDay() : Carbon::now()->startOfMonth()->startOfDay();
+        $endDate = $endDate ? Carbon::parse($endDate)->endOfDay() : Carbon::now()->endOfDay();
+
+        $data = $this->getLaporanIndikator($startDate, $endDate, $ruanganId);
+
+        $pdf = Pdf::loadView('pages.laporan.indikator-pdf', [
+            'data' => $data,
+            'start_date' => $startDate,
+            'end_date' => $endDate
+        ]);
+
+        $pdf->setPaper('A4', 'landscape');
+
+        return $pdf->download('laporan-indikator-pelayanan-rs-' . $startDate . '-to-' . $endDate . '.pdf');
+
+    }
+
+
+
+
 
 
 

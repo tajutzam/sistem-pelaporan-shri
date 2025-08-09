@@ -64,6 +64,9 @@ Route::middleware('auth')->group(function () {
         Route::get('rekapitulasi/cetak', [LaporanController::class, "exportRekapitulasi"])->name('laporan.rekapitulasi.cetak');
 
         Route::get("indikator-pelayanan", [LaporanController::class, "getLaporanBOR"])->name('laporan-indikator');
+        Route::get("indikator-pelayanan/pdf", [LaporanController::class, "perviewLaporanIndikatorPelayanan"])->name('laporan-indikator.preview-pdf');
+        Route::get("indikator-pelayanan/pdf/download", [LaporanController::class, "exportLaporanIndikatorPelayanan"])->name('laporan-indikator.download-pdf');
+
         Route::get("10-penyakit", [LaporanController::class, "tenDiagnosaPenyakit"])->name('laporan-10-penyakit');
 
     });
@@ -79,7 +82,8 @@ Route::middleware('auth')->group(function () {
 
 
     Route::prefix('grafik')->group(function () {
-        Route::get("kunjungan-pasien", [GrafixController::class, "kunjungan"]);
+        Route::get("kunjungan-pasien", [GrafixController::class, "kunjungan"])->name('grafik.kunjungan');
+        Route::get('barber-johnson', [GrafixController::class, "barberJohnson"])->name('grafik.barberJhonson');
     });
 
     // logout

@@ -25,6 +25,20 @@
 
                     const diff = Math.floor((keluar - masuk) / (1000 * 60 * 60 * 24));
                     this.selectedItem.lama_dirawat = `${diff} hari`;
+                },
+                closeModal() {
+                    this.open = false;
+                    // Reset form data when closing
+                    this.selectedItem = {
+                        no_rekam_medis: '',
+                        shri_id: '',
+                        nama_pasien: '',
+                        jenis_kelamin: '',
+                        tanggal_masuk: '',
+                        tanggal_keluar: '',
+                        ruangan: '',
+                        lama_dirawat: ''
+                    };
                 }
             }">
 
@@ -43,83 +57,102 @@
         </div>
 
         <!-- Modal -->
-        <div x-show="open" x-transition class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" x-cloak>
-            <form action="" method="post">
-                @csrf
-                <div class="bg-gray-100 p-6 rounded-lg w-full max-w-4xl relative">
+        <div x-show="open"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+             x-cloak
+             style="display: none;">
+            <div x-transition:enter="transition ease-out duration-300 transform"
+                 x-transition:enter-start="opacity-0 scale-75"
+                 x-transition:enter-end="opacity-100 scale-100"
+                 x-transition:leave="transition ease-in duration-200 transform"
+                 x-transition:leave-start="opacity-100 scale-100"
+                 x-transition:leave-end="opacity-0 scale-75"
+                 class="bg-gray-100 p-6 rounded-lg w-full max-w-4xl relative"
+                 @click.outside="closeModal()">
+
+                <form action="{{ route('register-shri.keluar.store') }}" method="POST">
+                    @csrf
                     <h2 class="text-lg font-semibold underline mb-4">Formulir Pendaftaran Pasien Keluar</h2>
+
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label>No. Rekam Medis</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">No. Rekam Medis</label>
                             <input type="text" class="w-full bg-gray-300 p-2 rounded" x-model="selectedItem.no_rekam_medis"
                                 disabled />
                         </div>
                         <input type="hidden" name="shri_id" :value="selectedItem.shri_id">
                         <div>
-                            <label>Tanggal Keluar</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Keluar</label>
                             <input name="tanggal_keluar" type="date" class="w-full p-2 rounded border"
                                 x-model="selectedItem.tanggal_keluar" @change="calculateLamaDirawat" />
                         </div>
                         <div>
-                            <label>Nama Pasien</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Nama Pasien</label>
                             <input type="text" class="w-full bg-gray-300 p-2 rounded" x-model="selectedItem.nama_pasien"
                                 disabled />
                         </div>
                         <div>
-                            <label>DPJP</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">DPJP</label>
                             <select name="dpjp_id" class="w-full p-2 rounded border">
-                                <option>Pilih salah satu</option>
+                                <option value="">Pilih salah satu</option>
                                 @foreach ($dpjps as $item)
                                     <option value="{{ $item->id }}">{{ $item->nama_lengkap }}</option>
                                 @endforeach
                             </select>
                         </div>
                         <div>
-                            <label>Jenis Kelamin</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Jenis Kelamin</label>
                             <input type="text" class="w-full bg-gray-300 p-2 rounded" x-model="selectedItem.jenis_kelamin"
                                 disabled />
                         </div>
                         <div>
-                            <label>Diagnosa Akhir</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Diagnosa Akhir</label>
                             <select name="diagnosa_id" class="w-full p-2 rounded border">
-                                <option>Pilih salah satu</option>
+                                <option value="">Pilih salah satu</option>
                                 @foreach ($diagnosas as $item)
                                     <option value="{{ $item->id }}">{{ $item->kode_icd }} - {{ $item->diagnosa }}</option>
                                 @endforeach
                             </select>
                         </div>
                         <div>
-                            <label>Tanggal Masuk</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Masuk</label>
                             <input type="text" class="w-full bg-gray-300 p-2 rounded" x-model="selectedItem.tanggal_masuk"
                                 disabled />
                         </div>
                         <div>
-                            <label>Cara Keluar</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Cara Keluar</label>
                             <select name="cara_keluar" class="w-full p-2 rounded border">
-                                <option>Pilih salah satu</option>
+                                <option value="">Pilih salah satu</option>
                                 @foreach (config('data.cara_keluar') as $item)
-                                    <option>{{ $item }}</option>
+                                    <option value="{{ $item }}">{{ $item }}</option>
                                 @endforeach
                             </select>
                         </div>
                         <div>
-                            <label>Ruangan</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Ruangan</label>
                             <input type="text" class="w-full bg-gray-300 p-2 rounded" x-model="selectedItem.ruangan"
                                 disabled />
                         </div>
                         <div>
-                            <label>Lama Dirawat</label>
-                            <input type="text" name="lama_dirawat" class="w-full bg-gray-300 p-2 rounded" x-model="selectedItem.lama_dirawat"
-                                readonly />
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Lama Dirawat</label>
+                            <input type="text" name="lama_dirawat" class="w-full bg-gray-300 p-2 rounded"
+                                x-model="selectedItem.lama_dirawat" readonly />
                         </div>
                     </div>
+
                     <div class="flex justify-end gap-4 mt-6">
-                        <button @click="open = false" type="button"
-                            class="bg-gray-600 text-white px-4 py-2 rounded">Tutup</button>
-                        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Simpan</button>
+                        <button @click="closeModal()" type="button"
+                            class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded transition-colors">Tutup</button>
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition-colors">Simpan</button>
                     </div>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
 
         <!-- Table -->
@@ -159,7 +192,8 @@
                                                         tanggal_keluar: '',
                                                         ruangan: '{{ $item->has('pindah') ? $item->pindah->kelas->nama_ruangan : $item->kelasPerawatan->nama_ruangan }}',
                                                         lama_dirawat: ''
-                                                    }" class="flex items-center gap-2 text-blue-600 hover:underline">
+                                                    }"
+                                        class="flex items-center gap-2 text-blue-600 hover:text-blue-800 hover:underline transition-colors">
                                     <i class="fa-solid fa-plus"></i> Tambah
                                 </button>
                             </td>

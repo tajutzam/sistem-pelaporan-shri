@@ -1,13 +1,12 @@
 @extends('layouts.app')
 
-
 @section('content')
     <div class="mb-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         <!-- Total Pasien Masuk -->
         <div
             class="bg-[#2ECC7170] rounded-xl border border-black flex flex-col justify-between h-32 transform transition-all hover:shadow-xl hover:scale-[1.02] cursor-pointer">
             <div class="p-4 text-center font-semibold">Total Pasien Masuk</div>
-            <span class="font-bold text-lg text-center">20</span>
+            <span class="font-bold text-lg text-center">{{$pasienMasuk}}</span>
 
             <div class="bg-green-500/60 text-black rounded-b-xl px-4 py-2 flex justify-center items-center gap-2">
             </div>
@@ -17,7 +16,7 @@
         <div
             class="bg-red-300 rounded-xl border border-black flex flex-col justify-between h-32 transform transition-all hover:shadow-xl hover:scale-[1.02] cursor-pointer">
             <div class="p-4 text-center font-semibold">Total Pasien Keluar</div>
-            <span class="font-bold text-lg text-center">20</span>
+            <span class="font-bold text-lg text-center">{{$pasienKeluar}}</span>
 
             <div class="bg-red-600/60 text-black rounded-b-xl px-4 py-2 flex justify-center items-center gap-2">
             </div>
@@ -28,7 +27,7 @@
             class="bg-blue-200 rounded-xl border border-black flex flex-col justify-between h-32 transform transition-all hover:shadow-xl hover:scale-[1.02] cursor-pointer">
             <div class="p-4 text-center font-semibold">Tempat Tidur Tersedia</div>
             <div class="flex items-center justify-center gap-2">
-                <span class="font-bold text-lg">20</span>
+                <span class="font-bold text-lg">{{$tempatTidurTersedia}}</span>
             </div>
             <div class="bg-blue-600/60 text-black rounded-b-xl px-4 py-2 flex justify-between items-center">
                 <div class="font-semibold flex items-center gap-1">
@@ -39,17 +38,17 @@
             </div>
         </div>
 
-        <!-- Waktu -->
+        <!-- Waktu dengan Clock Real-time -->
         <div
             class="bg-yellow-200 rounded-xl border border-black flex flex-col justify-between h-32 transform transition-all hover:shadow-xl hover:scale-[1.02] cursor-pointer">
             <div class="p-4 text-center font-semibold">Waktu</div>
-            <span class="text-sm bg-yellow-300/80 px-2 text-center rounded">Jun 10, 2024</span>
+            <span id="currentDate" class="text-sm bg-yellow-300/80 px-2 text-center rounded">Loading...</span>
             <div class="bg-yellow-600/60 text-black rounded-b-xl px-4 py-2 flex flex-col items-center">
-
-                <span class="text-lg font-semibold bg-yellow-500/70 px-3 rounded mt-1">9:41 AM</span>
+                <span id="currentTime" class="text-lg font-semibold bg-yellow-500/70 px-3 rounded mt-1">Loading...</span>
             </div>
         </div>
     </div>
+
     <div class="mt-10 bg-white rounded-xl p-4 shadow-md w-full">
         <h2 class="text-xl font-bold mb-4 text-center">Perbandingan BOR, Alvos, BTO, TOI per Ruangan</h2>
 
@@ -62,6 +61,40 @@
     @push('js')
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script>
+            // Real-time Clock Function
+            function updateClock() {
+                const now = new Date();
+
+                // Format tanggal
+                const dateOptions = {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    weekday: 'short'
+                };
+                const formattedDate = now.toLocaleDateString('id-ID', dateOptions);
+
+                // Format waktu dengan detik
+                const timeOptions = {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: false // Format 24 jam, ubah ke true jika ingin format AM/PM
+                };
+                const formattedTime = now.toLocaleTimeString('id-ID', timeOptions);
+
+                // Update elemen DOM
+                document.getElementById('currentDate').textContent = formattedDate;
+                document.getElementById('currentTime').textContent = formattedTime;
+            }
+
+            // Update clock setiap detik
+            setInterval(updateClock, 1000);
+
+            // Jalankan sekali saat halaman dimuat
+            updateClock();
+
+            // Chart Configuration
             const ctx = document.getElementById('comparisonChart').getContext('2d');
             const comparisonChart = new Chart(ctx, {
                 type: 'bar',

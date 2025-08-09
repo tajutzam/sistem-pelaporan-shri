@@ -2,9 +2,8 @@
 
 @section('content')
 
-    @dd($data)
+    {{-- @dd($data) --}}
     <h2 class="text-2xl font-bold mb-6 underline">Indikator Pelayanan Rumah Sakit</h2>
-
 
     <div class="space-y-6">
         <div class="bg-[#34495E] px-4 py-3 rounded-lg">
@@ -37,9 +36,7 @@
             </div>
         </form>
 
-
         <div class="overflow-x-auto">
-
             <!-- Informasi Filter yang Digunakan -->
             @if(request('start_date') || request('end_date'))
                 <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
@@ -111,10 +108,27 @@
             </table>
         </div>
 
-        <div class="flex justify-end">
-            <button class="bg-[#34B3AE] text-white px-5 py-2 rounded-lg hover:bg-[#2ca8a3] transition">
-                Cetak Laporan
-            </button>
+        <div class="flex justify-end space-x-3">
+            <!-- Tombol Preview PDF -->
+            <a href="{{ route('laporan-indikator.preview-pdf', [
+                'start_date' => request('start_date', \Carbon\Carbon::now()->startOfMonth()->toDateString()),
+                'end_date' => request('end_date', \Carbon\Carbon::now()->toDateString())
+            ]) }}"
+               target="_blank"
+               class="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition inline-flex items-center gap-2">
+                <i class="fas fa-eye"></i>
+                Preview PDF
+            </a>
+
+            <!-- Tombol Download PDF -->
+            <a href="{{ route('laporan-indikator.download-pdf', [
+                'start_date' => request('start_date', \Carbon\Carbon::now()->startOfMonth()->toDateString()),
+                'end_date' => request('end_date', \Carbon\Carbon::now()->toDateString())
+            ]) }}"
+               class="bg-[#34B3AE] text-white px-5 py-2 rounded-lg hover:bg-[#2ca8a3] transition inline-flex items-center gap-2">
+                <i class="fas fa-download"></i>
+                Download PDF
+            </a>
         </div>
     </div>
 @endsection
