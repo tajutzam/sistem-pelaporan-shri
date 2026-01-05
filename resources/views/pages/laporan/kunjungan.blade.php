@@ -11,11 +11,21 @@
                 <label for="ruangan" class="mb-1 text-sm font-medium text-gray-700">
                     Ruangan
                 </label>
-                <input type="text" id="ruangan" name="ruangan" placeholder="Masukkan ruangan"
-                    value="{{ request('ruangan') }}"
+                <select id="ruangan" name="ruangan"
                     class="bg-white border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                    @if (auth()->user()->hak_akses == 'kepala')
+                        <option value="">-- Semua Ruangan --</option>
+                    @else
+                        <option value="">-- Pilih Ruangan --</option>
+                    @endif
+                    @foreach ($ruangans as $r)
+                        <option value="{{ $r->nama_ruangan }}"
+                            {{ request('ruangan') == $r->nama_ruangan ? 'selected' : '' }}>
+                            {{ $r->nama_ruangan }}
+                        </option>
+                    @endforeach
+                </select>
             </div>
-
             <!-- Tanggal Awal -->
             <div class="flex flex-col">
                 <label for="tanggal-awal" class="mb-1 text-sm font-medium text-gray-700">
@@ -68,20 +78,21 @@
         </form>
 
         <!-- Info Hasil -->
-        @if(request()->hasAny(['ruangan', 'tanggal_awal', 'tanggal_akhir', 'search']))
+        @if (request()->hasAny(['ruangan', 'tanggal_awal', 'tanggal_akhir', 'search']))
             <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
                 <p class="text-sm text-blue-800">
                     <strong>Filter aktif:</strong>
-                    @if(request('ruangan'))
+                    @if (request('ruangan'))
                         Ruangan: <span class="font-semibold">{{ request('ruangan') }}</span>
                     @endif
-                    @if(request('tanggal_awal'))
+
+                    @if (request('tanggal_awal'))
                         | Tanggal mulai: <span class="font-semibold">{{ request('tanggal_awal') }}</span>
                     @endif
-                    @if(request('tanggal_akhir'))
+                    @if (request('tanggal_akhir'))
                         | Tanggal akhir: <span class="font-semibold">{{ request('tanggal_akhir') }}</span>
                     @endif
-                    @if(request('search'))
+                    @if (request('search'))
                         | Pencarian: <span class="font-semibold">{{ request('search') }}</span>
                     @endif
                 </p>
@@ -106,46 +117,62 @@
                         <th class="px-4 py-2 border">DPJP</th>
                         <th class="px-4 py-2 border">Tanggal Masuk</th>
                         <th class="px-4 py-2 border">Tanggal Keluar</th>
+                        <th class="px-4 py-2 border">Tanggal Pindah</th>
                         <th class="px-4 py-2 border">Status</th>
+                        <th class="px-4 py-2 border">Status Pasien</th>
+                        <th class="px-4 py-2 border">Asal Pasien</th>
                         <th class="px-4 py-2 border">Diagnosa</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white">
                     @forelse ($laporanKunjungans as $item)
                         <tr class="hover:bg-gray-50">
-                            <td class="px-4 py-2 border">{{$loop->iteration}}</td>
+                            <td class="px-4 py-2 border">{{ $loop->iteration }}</td>
                             <td class="px-4 py-2 border">
-                                {{$item->shri->pasien->no_rekam_medis}}
+                                {{ $item['no_rm'] }}
                             </td>
                             <td class="px-4 py-2 border">
-                                {{$item->shri->pasien->nama_pasien}}
+                                {{ $item['nama_pasien'] }}
                             </td>
                             <td class="px-4 py-2 border">
-                                {{$item->shri->pasien->jenis_kelamin}}
+                                {{ $item['jenis_kelamin'] }}
                             </td>
                             <td class="px-4 py-2 border">
-                                {{ $item->shri->pindah ? $item->shri->pindah->kelas->nama_ruangan : $item->shri->kelasPerawatan->nama_ruangan }}
+                                {{ $item['ruangan'] }}
                             </td>
                             <td class="px-4 py-2 border">
-                                {{ $item->shri->pindah ? $item->shri->pindah->kelas->kelas_ruangan : $item->shri->kelasPerawatan->kelas_ruangan }}
+                                {{ $item['kelas'] }}
                             </td>
                             <td class="px-4 py-2 border">
-                                {{$item->shri->jenisPenjaminan->jenis_jaminan ?? '-'}}
+                                {{ $item['penjaminan'] }}
                             </td>
                             <td class="px-4 py-2 border">
-                                {{$item->dpjp->nama_lengkap}}
+                                {{ $item['dpjp'] }}
                             </td>
                             <td class="px-4 py-2 border">
-                                {{$item->shri->tanggal_masuk}}
+                                {{ $item['tanggal_masuk'] }}
                             </td>
                             <td class="px-4 py-2 border">
-                                {{$item->tanggal_keluar}}
+                                {{ $item['tanggal_keluar'] ?? '-' }}
                             </td>
                             <td class="px-4 py-2 border">
-                                -
+                                {{ $item['tanggal_pindah'] ?? '-' }}
+                            </td>
+                            <td
+                                class="px-4 py-2 border font-bold
+                                                        @if ($item['status'] === 'dirawat') text-blue-600
+                                                        @elseif ($item['status'] === 'pindah') text-yellow-600
+                                                        @else text-red-600 @endif">
+                                {{ ucfirst($item['status']) }}
                             </td>
                             <td class="px-4 py-2 border">
-                                {{$item->diagnosa->diagnosa}}
+                                {{ $item['status_pasien'] }}
+                            </td>
+                            <td class="px-4 py-2 border">
+                                {{ $item['asal_pasien'] }}
+                            </td>
+                            <td class="px-4 py-2 border">
+                                {{ $item['diagnosa'] }}
                             </td>
                         </tr>
                     @empty
@@ -156,10 +183,24 @@
                         </tr>
                     @endforelse
                 </tbody>
+
             </table>
         </div>
 
-        <div class="flex justify-end">
+        <div class="flex justify-end gap-2">
+
+            @if (auth()->user()->hak_akses == 'kepala')
+                <form method="post" action="{{ route('laporan.verifikasi') }}">
+                    <input type="hidden" name="jenis_laporan" value="kunjungan">
+                    @csrf
+                    <button type="submit"
+                        class="bg-gray-600 text-white px-5 py-2.5 rounded-lg hover:bg-gray-700 transition font-medium inline-flex items-center gap-2">
+                        <i class="fas fa-check"></i>
+                        VERIFIKASI
+                    </button>
+                </form>
+            @endif
+
             <form method="GET" action="{{ route('laporan.kunjungan.cetak') }}" target="_blank">
 
                 <input type="hidden" name="ruangan" value="{{ request('ruangan') }}">
@@ -167,7 +208,7 @@
                 <input type="hidden" name="tanggal_akhir" value="{{ request('tanggal_akhir') }}">
                 <input type="hidden" name="search" value="{{ request('search') }}">
 
-                <button type="submit" class="bg-[#34B3AE] text-white px-5 py-2 rounded-lg hover:bg-[#2ca8a3] transition">
+                <button type="submit" class="bg-green-600 text-white px-5 py-2 rounded-lg hover:bg-green-700 transition">
                     <i class="fas fa-print mr-2"></i>Cetak Laporan
                 </button>
             </form>
@@ -175,12 +216,12 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
             const dateInputs = document.querySelectorAll('input[type="date"]');
             const form = document.querySelector('form');
 
             dateInputs.forEach(input => {
-                input.addEventListener('change', function () {
+                input.addEventListener('change', function() {
                     // Optional: Auto submit when date changes
                     // form.submit();
                 });
@@ -190,7 +231,7 @@
             const searchInput = document.querySelector('input[name="search"]');
             if (searchInput) {
                 let searchTimeout;
-                searchInput.addEventListener('input', function () {
+                searchInput.addEventListener('input', function() {
                     clearTimeout(searchTimeout);
                     searchTimeout = setTimeout(() => {
                         // Optional: Auto submit search after typing stops

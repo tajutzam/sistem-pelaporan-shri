@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Kelas;
 use App\Models\Ruangan;
 use Illuminate\Http\Request;
 
@@ -12,6 +13,7 @@ class RuanganController extends Controller
         $search = $request->query('search');
 
         $query = Ruangan::query();
+        $kelas = Kelas::all();
 
         if ($search) {
             $query->where(function ($q) use ($search) {
@@ -21,26 +23,26 @@ class RuanganController extends Controller
             });
         }
 
-        $ruangans = $query->paginate(5)->withQueryString();
 
-        return view('pages.data.ruangan.index', compact('ruangans', 'search'));
+        $ruangans = $query->with('kelas')->paginate(5)->withQueryString();
+
+        return view('pages.data.ruangan.index', compact('ruangans', 'search', 'kelas'));
     }
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'nama_ruangan' => 'required|string|max:255',
-            'kelas_ruangan' => 'required|string|max:255',
+            'kelas_ruangan' => 'required|exists:kelas,id',
             'jumlah_tempat_tidur' => 'required|integer|min:1',
             'status' => 'required|string|max:255',
         ]);
 
-        Ruangan::create($request->only([
-            'nama_ruangan',
-            'kelas_ruangan',
-            'jumlah_tempat_tidur',
-            'status',
-        ]));
+        $validated['kelas_ruangan_id'] = $validated['kelas_ruangan'];
+        unset($validated['kelas_ruangan']);
+
+
+        Ruangan::create($validated);
 
         return back()->with('success', 'Ruangan berhasil ditambahkan');
     }
@@ -49,19 +51,18 @@ class RuanganController extends Controller
     {
         $ruangan = Ruangan::findOrFail($id);
 
-        $request->validate([
+        $validated = $request->validate([
             'nama_ruangan' => 'required|string|max:255',
-            'kelas_ruangan' => 'required|string|max:255',
+            'kelas_ruangan' => 'required|exists:kelas,id',
             'jumlah_tempat_tidur' => 'required|integer|min:1',
             'status' => 'required|string|max:255',
         ]);
 
-        $ruangan->update($request->only([
-            'nama_ruangan',
-            'kelas_ruangan',
-            'jumlah_tempat_tidur',
-            'status',
-        ]));
+        $validated['kelas_ruangan_id'] = $validated['kelas_ruangan'];
+
+        unset($validated['kelas_ruangan']);
+
+        $ruangan->update($validated);
 
         return back()->with('success', 'Ruangan berhasil diperbarui');
     }

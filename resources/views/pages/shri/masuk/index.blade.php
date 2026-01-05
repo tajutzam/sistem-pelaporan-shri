@@ -1,7 +1,6 @@
 @extends('layouts.app')
 
 @section('content')
-
     <h2 class="font-bold text-2xl mb-4 underline">Pasien Masuk</h2>
 
     <div>
@@ -10,10 +9,6 @@
                 <span>Pilih Tanggal Sensus</span>
             </div>
             <input type="date" id="tanggal-sensus" class="border border-gray-500 rounded px-4 py-2">
-            <div class="mt-2 flex items-center gap-2">
-                <input type="checkbox" id="tidak-ada-pasien" class="w-4 h-4 text-red-600">
-                <label for="tidak-ada-pasien" class="text-sm text-gray-700">Tidak ada pasien masuk</label>
-            </div>
         </div>
 
         <!-- Header Section -->
@@ -26,15 +21,79 @@
             </a>
         </div>
 
-        <!-- Search Bar -->
-        <form action="{{ route('register-shri.masuk.view') }}" method="GET" class="flex justify-end mt-4">
-            <div class="relative w-full max-w-xs bg-[#E7E9D4]">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">
-                    <i class="fas fa-search"></i>
+        <form action="{{ route('register-shri.masuk.view') }}" method="GET" class="mt-4">
+            <div class="flex flex-row lg:flex-row gap-4 items-end">
+                <div class="relative flex-1 max-w-xs bg-[#E7E9D4]">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <input type="text" name="search" value="{{ request('search') }}"
+                        placeholder="Cari nama / no. rekam medis..."
+                        class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full" />
                 </div>
-                <input type="text" name="search" value="{{ request('search') }}"
-                    placeholder="Cari nama / no. rekam medis..."
-                    class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full" />
+
+                <!-- Year Filter -->
+                <div class="flex flex-col">
+                    <label for="tahun" class="text-sm font-medium text-gray-700 mb-1">Tahun</label>
+                    <select name="tahun" id="tahun"
+                        class="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Semua Tahun</option>
+                        @for ($year = date('Y'); $year >= 2020; $year--)
+                            <option value="{{ $year }}" {{ (request('tahun') ?? date('Y')) == $year ? 'selected' : '' }}>
+                                {{ $year }}
+                            </option>
+                        @endfor
+                    </select>
+                </div>
+
+                <div class="flex flex-col">
+                    <label for="bulan" class="text-sm font-medium text-gray-700 mb-1">Bulan</label>
+                    <select name="bulan" id="bulan"
+                        class="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Semua Bulan</option>
+                        @php
+                            $months = [
+                                1 => 'Januari',
+                                2 => 'Februari',
+                                3 => 'Maret',
+                                4 => 'April',
+                                5 => 'Mei',
+                                6 => 'Juni',
+                                7 => 'Juli',
+                                8 => 'Agustus',
+                                9 => 'September',
+                                10 => 'Oktober',
+                                11 => 'November',
+                                12 => 'Desember',
+                            ];
+                        @endphp
+                        @foreach ($months as $num => $name)
+                            <option value="{{ $num }}" {{ (request('bulan') ?? date('n')) == $num ? 'selected' : '' }}>
+                                {{ $name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <!-- Submit Button -->
+                <div>
+                    <button type="submit"
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors duration-200 flex items-center gap-2">
+                        <i class="fas fa-filter"></i>
+                        Tampilkan
+                    </button>
+                </div>
+
+                <!-- Clear Filter Button -->
+                @if (request('search') || request('tahun') || request('bulan'))
+                    <div>
+                        <a href="{{ route('register-shri.masuk.view') }}"
+                            class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors duration-200 flex items-center gap-2">
+                            <i class="fas fa-times"></i>
+                            Clear
+                        </a>
+                    </div>
+                @endif
             </div>
         </form>
 
@@ -59,14 +118,14 @@
                 <tbody class="bg-white">
                     @forelse ($shris as $shri)
                         <tr class="hover:bg-gray-50">
-                            <td class="px-4 py-2 border">{{ $shri->created_at->format('Y-m-d') }}</td>
+                            <td class="px-4 py-2 border">{{ $shri->tanggal_masuk }}</td>
                             <td class="px-4 py-2 border">{{ $shri->pasien->no_rekam_medis ?? '-' }}</td>
                             <td class="px-4 py-2 border">{{ $shri->pasien->nama_pasien ?? '-' }}</td>
                             <td class="px-4 py-2 border">{{ $shri->pasien->tanggal_lahir ?? '-' }}</td>
                             <td class="px-4 py-2 border">{{ $shri->pasien->jenis_kelamin ?? '-' }}</td>
                             <td class="px-4 py-2 border">{{ $shri->pasien->status_pasien ?? '-' }}</td>
                             <td class="px-4 py-2 border">{{ $shri->kelasPerawatan->nama_ruangan ?? '-' }}</td>
-                            <td class="px-4 py-2 border">{{ $shri->kelasPerawatan->kelas_ruangan ?? '-' }}</td>
+                            <td class="px-4 py-2 border">{{ $shri->kelasPerawatan->kelas->name ?? '-' }}</td>
                             <td class="px-4 py-2 border">{{ $shri->jenisPenjaminan->jenis_penjaminan ?? '-' }}</td>
                             <td class="px-4 py-2 border">{{ $shri->dpjp->nama_lengkap ?? '-' }}</td>
                             <td class="px-4 py-2 border flex gap-2 h-full">
@@ -96,34 +155,59 @@
             </div>
         </div>
     </div>
-
 @endsection
 
 
 @push('js')
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const tanggalInput = document.getElementById("tanggal-sensus");
-            const tambahBtn = document.getElementById("btn-tambah");
-            const checkboxTidakAda = document.getElementById("tidak-ada-pasien");
+    @push('js')
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const inputTanggal = document.getElementById("tanggal-sensus");
+                const tambahBtn = document.getElementById("btn-tambah");
 
-            function updateTambahState() {
-                const isTanggalDipilih = tanggalInput.value !== "";
-                const isTidakAdaDicentang = checkboxTidakAda.checked;
+                const nowJakarta = new Date(
+                    new Date().toLocaleString("en-US", { timeZone: "Asia/Jakarta" })
+                );
 
-                if (isTanggalDipilih && !isTidakAdaDicentang) {
-                    tambahBtn.classList.remove("pointer-events-none", "opacity-50");
-                    tambahBtn.querySelector("button").disabled = false;
-                } else {
-                    tambahBtn.classList.add("pointer-events-none", "opacity-50");
-                    tambahBtn.querySelector("button").disabled = true;
+                const maxDateStr = nowJakarta.toISOString().split("T")[0];
+
+                inputTanggal.setAttribute("max", maxDateStr);
+
+                let isSensusValid = false;
+                let isLoading = false;
+                const jenisRegister = "masuk";
+
+
+
+                function updateTambahHref() {
+                    const selectedDate = inputTanggal.value;
+
+                    if (selectedDate) {
+                        tambahBtn.classList.remove("pointer-events-none", "opacity-50");
+                        tambahBtn.querySelector("button").disabled = false;
+
+                        tambahBtn.setAttribute(
+                            "href",
+                            `/register-shri/${jenisRegister}/create?tanggal_sensus=${encodeURIComponent(selectedDate)}`
+                        );
+                    } else {
+                        tambahBtn.classList.add("pointer-events-none", "opacity-50");
+                        tambahBtn.querySelector("button").disabled = true;
+
+                        tambahBtn.setAttribute("href", "#");
+                    }
                 }
-            }
 
-            tanggalInput.addEventListener("change", updateTambahState);
-            checkboxTidakAda.addEventListener("change", updateTambahState);
-
-            updateTambahState();
-        });
-    </script>
+                const form = tambahBtn.closest("form");
+                if (form) {
+                    form.addEventListener("submit", function (e) {
+                        e.preventDefault();
+                        showValidationMessage(false, inputTanggal.value);
+                    });
+                }
+                updateTambahHref();
+                inputTanggal.addEventListener("change", updateTambahHref);
+            });
+        </script>
+    @endpush
 @endpush

@@ -93,30 +93,11 @@
         <p>Tanggal Cetak: {{ $date }}</p>
     </div>
 
-    <!-- Filter Information -->
-    {{-- @if($filters['ruangan'] || $filters['tanggal_awal'] || $filters['tanggal_akhir'] || $filters['search'])
-    <div class="filter-info">
-        <h3>Filter yang Diterapkan:</h3>
-        @if($filters['ruangan'])
-        <p><strong>Ruangan:</strong> {{ $filters['ruangan'] }}</p>
-        @endif
-        @if($filters['tanggal_awal'])
-        <p><strong>Tanggal Awal:</strong> {{ date('d/m/Y', strtotime($filters['tanggal_awal'])) }}</p>
-        @endif
-        @if($filters['tanggal_akhir'])
-        <p><strong>Tanggal Akhir:</strong> {{ date('d/m/Y', strtotime($filters['tanggal_akhir'])) }}</p>
-        @endif
-        @if($filters['search'])
-        <p><strong>Pencarian:</strong> {{ $filters['search'] }}</p>
-        @endif
-        <p><strong>Total Data:</strong> {{ count($laporanKunjungans) }} pasien</p>
-    </div>
-    @endif --}}
-
     <table>
         <thead>
             <tr>
                 <th style="width: 4%;">NO</th>
+
                 <th style="width: 10%;">No RM</th>
                 <th style="width: 12%;">Nama Pasien</th>
                 <th style="width: 8%;">JK</th>
@@ -127,6 +108,8 @@
                 <th style="width: 8%;">Tgl Masuk</th>
                 <th style="width: 8%;">Tgl Keluar</th>
                 <th style="width: 6%;">Status</th>
+                <th style="width: 6%;">Status Pasien</th>
+                <th style="width: 6%;">Asal Pasien</th>
                 <th style="width: 8%;">Diagnosa</th>
             </tr>
         </thead>
@@ -134,20 +117,27 @@
             @forelse($laporanKunjungans as $index => $item)
                 <tr>
                     <td class="text-center">{{ $index + 1 }}</td>
-                    <td>{{ $item->shri->pasien->no_rekam_medis }}</td>
-                    <td>{{ $item->shri->pasien->nama_pasien }}</td>
-                    <td class="text-center">{{ $item->shri->pasien->jenis_kelamin }}</td>
-                    <td>{{ $item->shri->pindah ? $item->shri->pindah->kelas->nama_ruangan : $item->shri->kelasPerawatan->nama_ruangan }}
+                    <td>{{ $item['no_rm'] }}</td>
+                    <td>{{ $item['nama_pasien'] }}</td>
+                    <td class="text-center">{{ $item['jenis_kelamin'] }}</td>
+                    <td>{{ $item['ruangan'] }}</td>
+                    <td class="text-center">{{ $item['kelas'] }}</td>
+                    <td>{{ $item['penjaminan'] }}</td>
+                    <td>{{ $item['dpjp'] }}</td>
+                    <td class="text-center">
+                        {{ $item['tanggal_masuk'] ? date('d/m/Y', timestamp: strtotime($item['tanggal_masuk'])) : '-' }}
                     </td>
                     <td class="text-center">
-                        {{ $item->shri->pindah ? $item->shri->pindah->kelas->kelas_ruangan : $item->shri->kelasPerawatan->kelas_ruangan }}
+                        {{ $item['tanggal_keluar'] ? date('d/m/Y', strtotime($item['tanggal_keluar'])) : '-' }}
                     </td>
-                    <td>{{ $item->shri->jenisPenjaminan->jenis_jaminan ?? '-' }}</td>
-                    <td>{{ $item->dpjp->nama_lengkap }}</td>
-                    <td class="text-center">{{ date('d/m/Y', strtotime($item->shri->tanggal_masuk)) }}</td>
-                    <td class="text-center">{{ date('d/m/Y', strtotime($item->tanggal_keluar)) }}</td>
-                    <td class="text-center">-</td>
-                    <td>{{ $item->diagnosa->diagnosa }}</td>
+                    <td class="text-center">{{ ucfirst($item['status']) }}</td>
+                    <td class="text-center">
+                        {{ $item['status_pasien'] }}
+                    </td>
+                    <td class="text-center">
+                        {{ $item['asal_pasien'] }}
+                    </td>
+                    <td>{{ $item['diagnosa'] }}</td>
                 </tr>
             @empty
                 <tr>
@@ -157,18 +147,11 @@
         </tbody>
     </table>
 
-    @if(count($laporanKunjungans) > 0)
-        <table>
-            <tr class="total-row">
-                <td colspan="12" style="text-align: center; font-weight: bold; padding: 10px;">
-                    TOTAL PASIEN: {{ count($laporanKunjungans) }} ORANG
-                </td>
-            </tr>
-        </table>
+    @if (count($laporanKunjungans) > 0)
     @endif
 
     <div class="footer">
-        <p>Surabaya, {{ date('d F Y') }}</p>
+        <p>{{ date('d F Y') }}</p>
         <p>Petugas Pelaporan</p>
         <br><br><br>
         <p>(_________________________)</p>

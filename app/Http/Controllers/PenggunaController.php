@@ -61,7 +61,10 @@ class PenggunaController extends Controller
             'tanggal_lahir' => 'required|date',
             'jenis_kelamin' => 'required|in:Laki-Laki,Perempuan',
             'hak_akses' => 'required|in:perawat,pelaporan,kepala',
+            'password' => 'nullable|min:8'
         ]);
+
+        $hashedPassword = bcrypt($request->password);
 
         $user->update([
             'name' => $request->name,
@@ -69,6 +72,7 @@ class PenggunaController extends Controller
             'tanggal_lahir' => $request->tanggal_lahir,
             'jenis_kelamin' => $request->jenis_kelamin,
             'hak_akses' => $request->hak_akses,
+            'password' => $request->password ? $hashedPassword : $user->password
         ]);
 
         return back()->with('success', 'Pengguna berhasil diperbarui');

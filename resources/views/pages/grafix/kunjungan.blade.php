@@ -19,8 +19,9 @@
                 <select id="ruangan" name="ruangan"
                     class="bg-white border border-gray-300 rounded px-3 py-2 w-48 focus:outline-none focus:ring-2 focus:ring-blue-400">
                     <option value="">Semua Ruangan</option>
-                    @foreach($ruangans as $r)
-                        <option value="{{ $r->nama_ruangan }}" {{ request('ruangan') == $r->nama_ruangan ? 'selected' : '' }}>
+                    @foreach ($ruangans as $r)
+                        <option value="{{ $r->nama_ruangan }}"
+                            {{ request('ruangan') == $r->nama_ruangan ? 'selected' : '' }}>
                             {{ $r->nama_ruangan }}
                         </option>
                     @endforeach
@@ -35,7 +36,8 @@
                 <select id="tahun" name="tahun"
                     class="bg-white border border-gray-300 rounded px-3 py-2 w-32 focus:outline-none focus:ring-2 focus:ring-blue-400">
                     @for ($i = now()->year; $i >= 2000; $i--)
-                        <option value="{{ $i }}" {{ $tahun == $i ? 'selected' : '' }}>{{ $i }}</option>
+                        <option value="{{ $i }}" {{ $tahun == $i ? 'selected' : '' }}>{{ $i }}
+                        </option>
                     @endfor
                 </select>
             </div>
@@ -58,33 +60,33 @@
         </form>
 
         <!-- Summary Statistics -->
-        @if(isset($dataKunjungan['summary']))
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div class="bg-blue-100 border border-blue-200 rounded-lg p-4">
-                <h4 class="font-semibold text-blue-800">Total Pasien Baru</h4>
-                <p class="text-2xl font-bold text-blue-600">{{ $dataKunjungan['summary']['total_baru'] }}</p>
+        @if (isset($dataKunjungan['summary']))
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="bg-blue-100 border border-blue-200 rounded-lg p-4">
+                    <h4 class="font-semibold text-blue-800">Total Pasien Baru</h4>
+                    <p class="text-2xl font-bold text-blue-600">{{ $dataKunjungan['summary']['total_baru'] }}</p>
+                </div>
+                <div class="bg-green-100 border border-green-200 rounded-lg p-4">
+                    <h4 class="font-semibold text-green-800">Total Pasien Lama</h4>
+                    <p class="text-2xl font-bold text-green-600">{{ $dataKunjungan['summary']['total_lama'] }}</p>
+                </div>
+                <div class="bg-purple-100 border border-purple-200 rounded-lg p-4">
+                    <h4 class="font-semibold text-purple-800">Total Kunjungan</h4>
+                    <p class="text-2xl font-bold text-purple-600">{{ $dataKunjungan['summary']['total_keseluruhan'] }}</p>
+                </div>
+                <div class="bg-orange-100 border border-orange-200 rounded-lg p-4">
+                    <h4 class="font-semibold text-orange-800">Rata-rata Bulanan</h4>
+                    <p class="text-2xl font-bold text-orange-600">{{ $dataKunjungan['summary']['rata_rata_bulanan'] }}</p>
+                </div>
             </div>
-            <div class="bg-green-100 border border-green-200 rounded-lg p-4">
-                <h4 class="font-semibold text-green-800">Total Pasien Lama</h4>
-                <p class="text-2xl font-bold text-green-600">{{ $dataKunjungan['summary']['total_lama'] }}</p>
-            </div>
-            <div class="bg-purple-100 border border-purple-200 rounded-lg p-4">
-                <h4 class="font-semibold text-purple-800">Total Kunjungan</h4>
-                <p class="text-2xl font-bold text-purple-600">{{ $dataKunjungan['summary']['total_keseluruhan'] }}</p>
-            </div>
-            <div class="bg-orange-100 border border-orange-200 rounded-lg p-4">
-                <h4 class="font-semibold text-orange-800">Rata-rata Bulanan</h4>
-                <p class="text-2xl font-bold text-orange-600">{{ $dataKunjungan['summary']['rata_rata_bulanan'] }}</p>
-            </div>
-        </div>
         @endif
 
         <!-- Info Filter -->
-        @if(request('ruangan') || request('tahun'))
+        @if (request('ruangan') || request('tahun'))
             <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <h4 class="font-semibold text-blue-800 mb-2">Filter Aktif:</h4>
                 <div class="text-sm text-blue-700">
-                    @if(request('ruangan'))
+                    @if (request('ruangan'))
                         <span class="inline-block bg-blue-200 px-2 py-1 rounded mr-2">
                             Ruangan: {{ request('ruangan') }}
                         </span>
@@ -93,11 +95,11 @@
                         Tahun: {{ $tahun }}
                     </span>
                 </div>
-                @if(isset($dataKunjungan['summary']['bulan_tertinggi']))
-                <div class="mt-2 text-sm text-blue-700">
-                    <strong>Bulan Tertinggi:</strong> {{ $dataKunjungan['summary']['bulan_tertinggi']['bulan'] }}
-                    ({{ $dataKunjungan['summary']['bulan_tertinggi']['jumlah'] }} kunjungan)
-                </div>
+                @if (isset($dataKunjungan['summary']['bulan_tertinggi']))
+                    <div class="mt-2 text-sm text-blue-700">
+                        <strong>Bulan Tertinggi:</strong> {{ $dataKunjungan['summary']['bulan_tertinggi']['bulan'] }}
+                        ({{ $dataKunjungan['summary']['bulan_tertinggi']['jumlah'] }} kunjungan)
+                    </div>
                 @endif
             </div>
         @endif
@@ -106,7 +108,7 @@
         <div class="bg-[#34495E] px-4 py-3 rounded-lg">
             <h3 class="text-white text-lg font-semibold">
                 Grafik Kunjungan Pasien Tahun {{ $tahun }}
-                @if(request('ruangan'))
+                @if (request('ruangan'))
                     - {{ request('ruangan') }}
                 @endif
             </h3>
@@ -117,10 +119,12 @@
         </div>
         <!-- Tombol Actions -->
         <div class="flex justify-end space-x-3">
-            <button onclick="downloadChart()" class="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition">
+            <button onclick="downloadChart()"
+                class="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition">
                 <i class="fas fa-download mr-2"></i>Download Chart
             </button>
-            <button onclick="printChart()" class="bg-[#34B3AE] text-white px-5 py-2 rounded-lg hover:bg-[#2ca8a3] transition">
+            <button onclick="printChart()"
+                class="bg-[#34B3AE] text-white px-5 py-2 rounded-lg hover:bg-[#2ca8a3] transition">
                 <i class="fas fa-print mr-2"></i>Cetak Grafik
             </button>
         </div>
@@ -137,8 +141,7 @@
             type: 'bar',
             data: {
                 labels: @json($dataKunjungan['labels']),
-                datasets: [
-                    {
+                datasets: [{
                         label: 'Pasien Baru',
                         data: @json($dataKunjungan['pasien_baru']),
                         backgroundColor: '#3498db',
@@ -151,6 +154,18 @@
                         backgroundColor: '#2ecc71',
                         borderColor: '#27ae60',
                         borderWidth: 1
+                    },
+                    {
+                        label: 'Laki-laki (L)',
+                        data: @json($dataKunjungan['laki_laki']),
+                        backgroundColor: '#818cf8',
+                        stack: 'gender'
+                    },
+                    {
+                        label: 'Perempuan (P)',
+                        data: @json($dataKunjungan['perempuan']),
+                        backgroundColor: '#fb7185',
+                        stack: 'gender'
                     }
                 ]
             },
@@ -209,31 +224,31 @@
 
             const printWindow = window.open('', '_blank');
             printWindow.document.write(`
-                <html>
-                <head>
-                    <title>Grafik Kunjungan Pasien</title>
-                    <style>
-                        body {
-                            margin: 20px;
-                            text-align: center;
-                            font-family: Arial, sans-serif;
-                        }
-                        h1 { color: #34495e; }
-                        .info { margin: 20px 0; font-size: 14px; }
-                        img { max-width: 100%; height: auto; }
-                    </style>
-                </head>
-                <body>
-                    <h1>Grafik Kunjungan Pasien</h1>
-                    <div class="info">
-                        <p>Tahun: {{ $tahun }}</p>
-                        @if(request('ruangan'))<p>Ruangan: {{ request('ruangan') }}</p>@endif
-                        <p>Dicetak pada: ${new Date().toLocaleDateString('id-ID')}</p>
-                    </div>
-                    <img src="${dataURL}" alt="Grafik Kunjungan Pasien">
-                </body>
-                </html>
-            `);
+                    <html>
+                    <head>
+                        <title>Grafik Kunjungan Pasien</title>
+                        <style>
+                            body {
+                                margin: 20px;
+                                text-align: center;
+                                font-family: Arial, sans-serif;
+                            }
+                            h1 { color: #34495e; }
+                            .info { margin: 20px 0; font-size: 14px; }
+                            img { max-width: 100%; height: auto; }
+                        </style>
+                    </head>
+                    <body>
+                        <h1>Grafik Kunjungan Pasien</h1>
+                        <div class="info">
+                            <p>Tahun: {{ $tahun }}</p>
+                            @if (request('ruangan'))<p>Ruangan: {{ request('ruangan') }}</p>@endif
+                            <p>Dicetak pada: ${new Date().toLocaleDateString('id-ID')}</p>
+                        </div>
+                        <img src="${dataURL}" alt="Grafik Kunjungan Pasien">
+                    </body>
+                    </html>
+                `);
             printWindow.document.close();
 
             setTimeout(() => {

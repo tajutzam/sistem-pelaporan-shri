@@ -9,9 +9,12 @@ use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\PasienController;
 use App\Http\Controllers\PenggunaController;
 use App\Http\Controllers\PenjaminanController;
+use App\Http\Controllers\PerawatRuanganController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RegisterShriController;
 use App\Http\Controllers\RuanganController;
 use App\Http\Controllers\TempatTidurController;
+use App\Models\PerawatRuangan;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -23,6 +26,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
     Route::get('tempat-tidur', [TempatTidurController::class, 'index'])->name('admin.tempat-tidur');
+
 
     Route::prefix('register-shri')->group(function () {
         // masuk
@@ -68,6 +72,8 @@ Route::middleware('auth')->group(function () {
         Route::get("indikator-pelayanan/pdf/download", [LaporanController::class, "exportLaporanIndikatorPelayanan"])->name('laporan-indikator.download-pdf');
 
         Route::get("10-penyakit", [LaporanController::class, "tenDiagnosaPenyakit"])->name('laporan-10-penyakit');
+        Route::get("10-penyakit/cetak", [LaporanController::class, "cetakTenDiagnosaPenyakit"])->name('laporan-10-penyakit.cetak');
+
 
     });
 
@@ -78,6 +84,7 @@ Route::middleware('auth')->group(function () {
         Route::resource('dpjp', DpjpController::class);
         Route::resource('pasien', PasienController::class);
         Route::resource('diagnosa', DiagnosaController::class);
+        Route::resource("hak-akses-perawat", PerawatRuanganController::class);
     });
 
 
@@ -86,9 +93,22 @@ Route::middleware('auth')->group(function () {
         Route::get('barber-johnson', [GrafixController::class, "barberJohnson"])->name('grafik.barberJhonson');
     });
 
+    Route::get("profile", [ProfileController::class, "index"])->name('profile');
+    Route::put("profile", [ProfileController::class, "update"])->name('profile.update');
+    Route::post("profile", [ProfileController::class, "updatePassword"])->name('profile.password');
+    Route::post('verifikasi/laporan', [LaporanController::class, "verifikasi"])->name('laporan.verifikasi');
+
+
+
     // logout
 
 
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+
+
+    Route::post('check/sensus', [RegisterShriController::class, "cekSensusYesterday"])->name('check-sensus');
+    Route::post('mark/sensus-empty', [RegisterShriController::class, 'markEmpty'])->name('mark-sensus');
+
 
 });

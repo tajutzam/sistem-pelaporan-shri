@@ -43,7 +43,7 @@
                         <tr>
                             <td class="border px-4 py-2">{{ $ruangans->firstItem() + $loop->index }}</td>
                             <td class="border px-4 py-2">{{ $ruangan->nama_ruangan }}</td>
-                            <td class="border px-4 py-2">{{ $ruangan->kelas_ruangan }}</td>
+                            <td class="border px-4 py-2">{{ $ruangan->kelas->name }}</td>
                             <td class="border px-4 py-2">{{ $ruangan->jumlah_tempat_tidur }}</td>
                             <td class="border px-4 py-2">{{ $ruangan->status }}</td>
                             <td class="border px-4 py-2 space-x-2">
@@ -83,22 +83,21 @@
 
                     <label class="block text-sm font-medium mb-1">Kelas Ruangan</label>
                     <select name="kelas_ruangan" class="w-full border rounded px-3 py-2 mb-2" " required>
-                                <option value="">Pilih Kelas</option>
-                                @foreach (config('ruangan.kelas_ruangan') as $kelas)
-                                    <option value=" {{ $kelas }}">{{ $kelas }}</option>
-                                @endforeach
+                                                                            <option value="">Pilih Kelas</option>
+                                                                                 @foreach ($kelas as $kel)
+                        <option value=" {{ $kel->id }}">{{ $kel->name }}</option>
+                        @endforeach
                     </select>
 
                     <label class="block text-sm font-medium mb-1">Jumlah Tempat Tidur</label>
-                    <input type="number" name="jumlah_tempat_tidur" class="w-full border rounded px-3 py-2 mb-2" min="1"
-                        required>
+                    <input type="number" name="jumlah_tempat_tidur" class="w-full border rounded px-3 py-2 mb-2"
+                        min="1" required>
 
                     <label class="block text-sm font-medium mb-1">Status</label>
                     <select name="status" class="w-full border rounded px-3 py-2 mb-2" required>
                         <option value="">-- Pilih Status --</option>
-                        <option value="Tersedia">Tersedia</option>
-                        <option value="Penuh">Penuh</option>
-                        <option value="Dalam Perbaikan">Dalam Perbaikan</option>
+                        <option value="Aktif">Aktif</option>
+                        <option value="Tidak Aktif">Tidak Aktif</option>
                     </select>
 
                     <div class="flex justify-end mt-4">
@@ -129,22 +128,21 @@
                     <select name="kelas_ruangan" class="w-full border rounded px-3 py-2 mb-2"
                         x-model="editRuangan.kelas_ruangan" required>
                         <option value="">Pilih Kelas</option>
-                        @foreach (config('ruangan.kelas_ruangan') as $kelas)
-                            <option value="{{ $kelas }}">{{ $kelas }}</option>
+                        @foreach ($kelas as $kel)
+                            <option value=" {{ $kel->id }}">{{ $kel->name }}</option>
                         @endforeach
                     </select>
 
                     <label class="block text-sm font-medium mb-1">Jumlah Tempat Tidur</label>
-                    <input type="number" name="jumlah_tempat_tidur" min="1" class="w-full border rounded px-3 py-2 mb-2"
-                        x-model="editRuangan.jumlah_tempat_tidur" required>
+                    <input type="number" name="jumlah_tempat_tidur" min="1"
+                        class="w-full border rounded px-3 py-2 mb-2" x-model="editRuangan.jumlah_tempat_tidur" required>
 
                     <label class="block text-sm font-medium mb-1">Status</label>
                     <select name="status" class="w-full border rounded px-3 py-2 mb-2" x-model="editRuangan.status"
                         required>
                         <option value="">-- Pilih Status --</option>
-                        <option value="Tersedia">Tersedia</option>
-                        <option value="Penuh">Penuh</option>
-                        <option value="Dalam Perbaikan">Dalam Perbaikan</option>
+                        <option value="Aktif">Aktif</option>
+                        <option value="Tidak Aktif">Tidak Aktif</option>
                     </select>
 
                     <div class="flex justify-end mt-4">

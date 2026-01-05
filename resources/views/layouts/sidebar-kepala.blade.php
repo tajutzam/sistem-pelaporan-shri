@@ -14,7 +14,7 @@
             <a href="/laporan/kunjungan" class="block py-2 px-4 rounded hover:bg-white hover:text-[#2F3E52] transition">
                 <i class="fas fa-notes-medical mr-2"></i> Kunjungan Rekapitulasi
             </a>
-            <a href="/laporan/rekapitulasi-shri"
+            <a href="/laporan/rekapitulasi"
                 class="block py-2 px-4 rounded hover:bg-white hover:text-[#2F3E52] transition">
                 <i class="fas fa-procedures mr-2"></i> Rekapitulasi SHRI
             </a>
@@ -22,9 +22,9 @@
                 class="block py-2 px-4 rounded hover:bg-white hover:text-[#2F3E52] transition">
                 <i class="fas fa-chart-line mr-2"></i> Indikator Pelayanan Rumah Sakit
             </a>
-            <a href="/laporan/10-besar-penyakit"
+            <a href="/laporan/10-penyakit"
                 class="block py-2 px-4 rounded hover:bg-white hover:text-[#2F3E52] transition">
-                <i class="fas fa-list-ol mr-2"></i> 10 Besar Penyakit
+                <i class="fas fa-list-ol mr-2"></i> 20 Besar Penyakit
             </a>
         </div>
     </div>

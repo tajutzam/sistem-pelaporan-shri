@@ -150,7 +150,9 @@
                         <option value="pelaporan">Pelaporan</option>
                         <option value="kepala">Kepala</option>
                     </select>
-
+                    <label class="block text-sm font-medium mb-1">Password</label>
+                    <input type="password" name="password" class="w-full border rounded px-3 py-2 mb-2"
+                        placeholder="Masukan Password Baru jika ingin merubah">
                     <div class="flex justify-end mt-4">
                         <button type="submit"
                             class="bg-[#34495E] text-white px-4 py-2 rounded hover:bg-[#2c3e50]">Perbarui</button>

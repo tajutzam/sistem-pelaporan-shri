@@ -24,7 +24,13 @@ class Shri extends Model
 
     public function kelasPerawatan(): BelongsTo
     {
-        return $this->belongsTo(Ruangan::class, 'kelas_perawatan_id', 'id');
+        return $this->belongsTo(Ruangan::class, 'kelas_perawatan_id', 'id')->withoutGlobalScopes();
+    }
+
+
+    public function ruangan(): BelongsTo
+    {
+        return $this->belongsTo(Ruangan::class, 'kelas_perawatan_id', 'id')->withoutGlobalScopes();
     }
 
     public function jenisPenjaminan(): BelongsTo
@@ -36,6 +42,26 @@ class Shri extends Model
     public function pindah()
     {
         return $this->hasOne(ShriPindah::class, "shri_id", "id");
+    }
+
+    public function keluar()
+    {
+        return $this->hasMany(ShriKeluar::class, "shri_id");
+    }
+
+    public function shriPindah()
+    {
+        return $this->hasOne(ShriPindah::class, "shri_id", "id");
+    }
+
+    public function shriKeluar()
+    {
+        return $this->hasOne(ShriKeluar::class, "shri_id", "id");
+    }
+
+    public function kelas()
+    {
+        return $this->ruangan?->kelas();
     }
 
 }

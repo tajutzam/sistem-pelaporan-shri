@@ -29,6 +29,10 @@
             <a href="/data/diagnosa" class="block py-2 px-4 rounded hover:bg-white hover:text-[#2F3E52] transition">
                 <i class="fas fa-notes-medical mr-2"></i> Data Diagnosa
             </a>
+            <a href="/data/hak-akses-perawat"
+                class="block py-2 px-4 rounded hover:bg-white hover:text-[#2F3E52] transition">
+                <i class="fas fa-notes-medical mr-2"></i> Data Hak Akses Ruangan
+            </a>
         </div>
     </div>
 
@@ -53,7 +57,7 @@
             </a>
             <a href="/laporan/10-penyakit"
                 class="block py-2 px-4 rounded hover:bg-white hover:text-[#2F3E52] transition">
-                <i class="fas fa-list-ol mr-2"></i> 10 Besar Penyakit
+                <i class="fas fa-list-ol mr-2"></i> 20 Besar Penyakit
             </a>
         </div>
     </div>

@@ -9,6 +9,7 @@
             <span class="font-bold text-lg text-center">{{$pasienMasuk}}</span>
 
             <div class="bg-green-500/60 text-black rounded-b-xl px-4 py-2 flex justify-center items-center gap-2">
+                <span class="text-sm">Hari Ini</span>
             </div>
         </div>
 
@@ -19,6 +20,7 @@
             <span class="font-bold text-lg text-center">{{$pasienKeluar}}</span>
 
             <div class="bg-red-600/60 text-black rounded-b-xl px-4 py-2 flex justify-center items-center gap-2">
+                <span class="text-sm">Hari Ini</span>
             </div>
         </div>
 
@@ -49,10 +51,63 @@
         </div>
     </div>
 
-    <div class="mt-10 bg-white rounded-xl p-4 shadow-md w-full">
-        <h2 class="text-xl font-bold mb-4 text-center">Perbandingan BOR, Alvos, BTO, TOI per Ruangan</h2>
+    <!-- Filter untuk Chart -->
+    <div class="mt-6 bg-white rounded-xl p-4 shadow-md">
+        <div class="flex flex-wrap gap-4 items-center mb-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Filter Periode:</label>
+                <select id="monthFilter"
+                    class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">Pilih Bulan</option>
+                    <option value="1" {{date('n') == 1 ? 'selected' : ''}}>Januari</option>
+                    <option value="2" {{date('n') == 2 ? 'selected' : ''}}>Februari</option>
+                    <option value="3" {{date('n') == 3 ? 'selected' : ''}}>Maret</option>
+                    <option value="4" {{date('n') == 4 ? 'selected' : ''}}>April</option>
+                    <option value="5" {{date('n') == 5 ? 'selected' : ''}}>Mei</option>
+                    <option value="6" {{date('n') == 6 ? 'selected' : ''}}>Juni</option>
+                    <option value="7" {{date('n') == 7 ? 'selected' : ''}}>Juli</option>
+                    <option value="8" {{date('n') == 8 ? 'selected' : ''}}>Agustus</option>
+                    <option value="9" {{date('n') == 9 ? 'selected' : ''}}>September</option>
+                    <option value="10" {{date('n') == 10 ? 'selected' : ''}}>Oktober</option>
+                    <option value="11" {{date('n') == 11 ? 'selected' : ''}}>November</option>
+                    <option value="12" {{date('n') == 12 ? 'selected' : ''}}>Desember</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Tahun:</label>
+                <select id="yearFilter"
+                    class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    @for($year = date('Y'); $year >= 2019; $year--)
+                        <option value="{{$year}}" {{date('Y') == $year ? 'selected' : ''}}>{{$year}}</option>
+                    @endfor
+                </select>
+            </div>
+            <div class="flex items-end">
+                <button id="updateChart"
+                    class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors">
+                    Update Grafik
+                </button>
+            </div>
+            <div class="flex items-end">
+                <button id="refreshChart"
+                    class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors">
+                    <i class="fas fa-sync-alt mr-1"></i> Refresh
+                </button>
+            </div>
+        </div>
+    </div>
 
-        <!-- Responsive container -->
+    <div class="mt-4 bg-white rounded-xl p-4 shadow-md w-full">
+        <h2 class="text-xl font-bold mb-4 text-center">Indikator Pelayanan Rumah Sakit</h2>
+        <p class="text-center text-gray-600 mb-4" id="chartPeriod">Data periode: <span
+                id="currentPeriod">{{date('F Y')}}</span></p>
+
+        <!-- Loading indicator -->
+        <div id="chartLoading" class="hidden text-center py-8">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            <p class="mt-2 text-gray-600">Memuat data...</p>
+        </div>
+
         <div class="relative w-full aspect-[2/1]">
             <canvas id="comparisonChart" class="w-full h-full absolute left-0 top-0"></canvas>
         </div>
@@ -61,11 +116,14 @@
     @push('js')
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script>
+            let comparisonChart;
+            const monthNames = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+                'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+
             // Real-time Clock Function
             function updateClock() {
                 const now = new Date();
 
-                // Format tanggal
                 const dateOptions = {
                     year: 'numeric',
                     month: 'short',
@@ -74,76 +132,185 @@
                 };
                 const formattedDate = now.toLocaleDateString('id-ID', dateOptions);
 
-                // Format waktu dengan detik
                 const timeOptions = {
                     hour: '2-digit',
                     minute: '2-digit',
                     second: '2-digit',
-                    hour12: false // Format 24 jam, ubah ke true jika ingin format AM/PM
+                    hour12: false
                 };
                 const formattedTime = now.toLocaleTimeString('id-ID', timeOptions);
 
-                // Update elemen DOM
                 document.getElementById('currentDate').textContent = formattedDate;
                 document.getElementById('currentTime').textContent = formattedTime;
             }
 
             // Update clock setiap detik
             setInterval(updateClock, 1000);
-
-            // Jalankan sekali saat halaman dimuat
             updateClock();
 
-            // Chart Configuration
-            const ctx = document.getElementById('comparisonChart').getContext('2d');
-            const comparisonChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: ['Ruang Interna', 'Ruang Anak', 'Ruang Materna', 'Ruang Bedah', 'NICU', 'ICU'],
-                    datasets: [
-                        {
-                            label: 'BOR',
-                            data: [60, 70, 55, 40, 80, 75],
-                            backgroundColor: 'rgba(46, 204, 113, 0.7)'
+            // Initialize chart with data from server
+            function initChart() {
+                const ctx = document.getElementById('comparisonChart').getContext('2d');
+                const chartData = @json($chartData);
+
+                comparisonChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: chartData.labels,
+                        datasets: [
+                            {
+                                label: 'BOR (%)',
+                                data: chartData.bor,
+                                backgroundColor: 'rgba(46, 204, 113, 0.7)',
+                                borderColor: 'rgba(46, 204, 113, 1)',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'AvLOS (Hari)',
+                                data: chartData.avlos,
+                                backgroundColor: 'rgba(231, 76, 60, 0.7)',
+                                borderColor: 'rgba(231, 76, 60, 1)',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'BTO (Kali)',
+                                data: chartData.bto,
+                                backgroundColor: 'rgba(52, 152, 219, 0.7)',
+                                borderColor: 'rgba(52, 152, 219, 1)',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'TOI (Hari)',
+                                data: chartData.toi,
+                                backgroundColor: 'rgba(241, 196, 15, 0.7)',
+                                borderColor: 'rgba(241, 196, 15, 1)',
+                                borderWidth: 1
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: {
+                            intersect: false,
+                            mode: 'index'
                         },
-                        {
-                            label: 'Alvos',
-                            data: [10, 12, 9, 6, 15, 13],
-                            backgroundColor: 'rgba(231, 76, 60, 0.7)'
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    precision: 1
+                                }
+                            },
+                            x: {
+                                ticks: {
+                                    maxRotation: 45,
+                                    minRotation: 0
+                                }
+                            }
                         },
-                        {
-                            label: 'BTO',
-                            data: [5, 4, 6, 3, 8, 7],
-                            backgroundColor: 'rgba(52, 152, 219, 0.7)'
-                        },
-                        {
-                            label: 'TOI',
-                            data: [2, 1.5, 2.5, 3, 1, 1.2],
-                            backgroundColor: 'rgba(241, 196, 15, 0.7)'
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                precision: 0
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                            },
+                            title: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        label += context.parsed.y.toFixed(2);
+                                        return label;
+                                    }
+                                }
                             }
                         }
-                    },
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                        },
-                        title: {
-                            display: false
-                        }
                     }
+                });
+            }
+
+            // Update chart with new data
+            async function updateChartData() {
+                const month = document.getElementById('monthFilter').value;
+                const year = document.getElementById('yearFilter').value;
+
+                // Show loading
+                document.getElementById('chartLoading').classList.remove('hidden');
+                document.getElementById('comparisonChart').style.opacity = '0.5';
+
+                try {
+                    const response = await fetch('/api/dashboard-chart-data', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            month: month,
+                            year: year
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch data');
+                    }
+
+                    const chartData = await response.json();
+
+                    // Update chart data
+                    comparisonChart.data.labels = chartData.labels;
+                    comparisonChart.data.datasets[0].data = chartData.bor;
+                    comparisonChart.data.datasets[1].data = chartData.avlos;
+                    comparisonChart.data.datasets[2].data = chartData.bto;
+                    comparisonChart.data.datasets[3].data = chartData.toi;
+
+                    comparisonChart.update('active');
+
+                    // Update period display
+                    let periodText = year;
+                    if (month) {
+                        periodText = `${monthNames[parseInt(month)]} ${year}`;
+                    }
+                    document.getElementById('currentPeriod').textContent = periodText;
+
+                } catch (error) {
+                    console.error('Error updating chart:', error);
+                    alert('Gagal memperbarui grafik. Silakan coba lagi.');
+                } finally {
+                    // Hide loading
+                    document.getElementById('chartLoading').classList.add('hidden');
+                    document.getElementById('comparisonChart').style.opacity = '1';
                 }
+            }
+
+            // Event listeners
+            document.addEventListener('DOMContentLoaded', function () {
+                initChart();
+
+                document.getElementById('updateChart').addEventListener('click', updateChartData);
+
+                document.getElementById('refreshChart').addEventListener('click', function () {
+                    // Reset to current month/year
+                    document.getElementById('monthFilter').value = new Date().getMonth() + 1;
+                    document.getElementById('yearFilter').value = new Date().getFullYear();
+                    updateChartData();
+                });
+
+                // Auto-update on filter change
+                document.getElementById('monthFilter').addEventListener('change', updateChartData);
+                document.getElementById('yearFilter').addEventListener('change', updateChartData);
             });
+
+            // Auto refresh every 5 minutes
+            setInterval(function () {
+                if (document.getElementById('monthFilter').value == new Date().getMonth() + 1 &&
+                    document.getElementById('yearFilter').value == new Date().getFullYear()) {
+                    updateChartData();
+                }
+            }, 300000); // 5 minutes
         </script>
     @endpush
 

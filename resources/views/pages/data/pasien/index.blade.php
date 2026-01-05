@@ -79,7 +79,8 @@
                 <form action="{{ route('pasien.store') }}" method="POST">
                     @csrf
                     <label class="block text-sm font-medium mb-1">No Rekam Medis</label>
-                    <input type="text" name="no_rekam_medis" class="w-full border rounded px-3 py-2 mb-2" required>
+                    <input type="text" name="no_rekam_medis" class="w-full border rounded px-3 py-2 mb-2 no_rm"
+                        maxlength="8" required>
 
                     <label class="block text-sm font-medium mb-1">Nama Pasien</label>
                     <input type="text" name="nama_pasien" class="w-full border rounded px-3 py-2 mb-2" required>
@@ -115,8 +116,8 @@
                     <input type="hidden" name="id" :value="editPasien.id">
 
                     <label class="block text-sm font-medium mb-1">No Rekam Medis</label>
-                    <input type="text" name="no_rekam_medis" class="w-full border rounded px-3 py-2 mb-2"
-                        x-model="editPasien.no_rekam_medis" required>
+                    <input type="text" name="no_rekam_medis" class="w-full border rounded px-3 py-2 mb-2 no_rm"
+                        x-model="editPasien.no_rekam_medis" maxlength="8" required>
 
                     <label class="block text-sm font-medium mb-1">Nama Pasien</label>
                     <input type="text" name="nama_pasien" class="w-full border rounded px-3 py-2 mb-2"

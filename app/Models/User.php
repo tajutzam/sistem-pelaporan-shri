@@ -37,4 +37,10 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function perawatRuangans()
+    {
+        return $this->hasMany(\App\Models\PerawatRuangan::class);
+    }
+
 }

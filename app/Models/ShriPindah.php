@@ -18,9 +18,11 @@ class ShriPindah extends Model
         return $this->belongsTo(Shri::class, "shri_id");
     }
 
-    public function kelas()
+    public function ruangan()
     {
-        return $this->belongsTo(Ruangan::class, 'kelas_perawatan_id');
+        return $this->belongsTo(Ruangan::class, 'kelas_perawatan_id')->withoutGlobalScopes();
     }
+
+
 
 }

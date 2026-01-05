@@ -1,17 +1,26 @@
 @extends('layouts.app')
 
 @section('content')
-    <h2 class="text-2xl font-bold mb-6 underline">10 Besar Penyakit</h2>
+    <h2 class="text-2xl font-bold mb-6 underline">20 Besar Penyakit</h2>
 
     <form method="GET" class="p-6 rounded-lg mb-6">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-4">
+
             <!-- Filter Ruangan -->
             <div class="flex flex-col">
                 <label for="ruangan" class="mb-2 text-sm font-semibold text-gray-700">Ruangan</label>
-                <input type="text" id="ruangan" name="ruangan" placeholder="Masukkan ruangan"
-                    class="bg-white border border-gray-300 rounded-md px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    value="{{ request('ruangan') }}">
+                <select id="ruangan" name="ruangan"
+                    class="bg-white border border-gray-300 rounded-md px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                    <option value="">-- Semua Ruangan --</option>
+                    @foreach ($ruangans as $r)
+                        <option value="{{ $r->nama_ruangan }}"
+                            {{ request('ruangan') == $r->nama_ruangan ? 'selected' : '' }}>
+                            {{ $r->nama_ruangan }}
+                        </option>
+                    @endforeach
+                </select>
             </div>
+
 
             <!-- Filter Tahun -->
             <div class="flex flex-col">
@@ -36,12 +45,21 @@
                     </option>
                     <optgroup label="Per Bulan">
                         @foreach ([
-                            '01' => 'Januari', '02' => 'Februari', '03' => 'Maret',
-                            '04' => 'April', '05' => 'Mei', '06' => 'Juni',
-                            '07' => 'Juli', '08' => 'Agustus', '09' => 'September',
-                            '10' => 'Oktober', '11' => 'November', '12' => 'Desember'
-                        ] as $key => $val)
-                            <option value="bulan_{{ $key }}" {{ request('periode') == "bulan_$key" ? 'selected' : '' }}>
+            '01' => 'Januari',
+            '02' => 'Februari',
+            '03' => 'Maret',
+            '04' => 'April',
+            '05' => 'Mei',
+            '06' => 'Juni',
+            '07' => 'Juli',
+            '08' => 'Agustus',
+            '09' => 'September',
+            '10' => 'Oktober',
+            '11' => 'November',
+            '12' => 'Desember',
+        ] as $key => $val)
+                            <option value="bulan_{{ $key }}"
+                                {{ request('periode') == "bulan_$key" ? 'selected' : '' }}>
                                 {{ $val }}
                             </option>
                         @endforeach
@@ -77,7 +95,7 @@
         </div>
 
         <!-- Info Filter Aktif -->
-        @if(request()->hasAny(['ruangan', 'tahun', 'periode', 'search']))
+        @if (request()->hasAny(['ruangan', 'tahun', 'periode', 'search']))
             <div class="bg-blue-50 border border-blue-200 rounded-md p-3 text-sm">
                 <div class="flex items-center">
                     <svg class="w-4 h-4 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -87,22 +105,22 @@
                     <span class="text-blue-800 font-medium">Filter Aktif:</span>
                 </div>
                 <div class="mt-2 flex flex-wrap gap-2">
-                    @if(request('ruangan'))
+                    @if (request('ruangan'))
                         <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
                             Ruangan: {{ request('ruangan') }}
                         </span>
                     @endif
-                    @if(request('tahun'))
+                    @if (request('tahun'))
                         <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
                             Tahun: {{ request('tahun') }}
                         </span>
                     @endif
-                    @if(request('periode') && request('periode') != 'semua')
+                    @if (request('periode') && request('periode') != 'semua')
                         <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
                             Periode: {{ ucfirst(str_replace(['bulan_', '_'], ['', ' '], request('periode'))) }}
                         </span>
                     @endif
-                    @if(request('search'))
+                    @if (request('search'))
                         <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
                             Pencarian: "{{ request('search') }}"
                         </span>
@@ -139,5 +157,15 @@
                 @endforelse
             </tbody>
         </table>
+        <div class="flex justify-end mt-4">
+            <a href="{{ route('laporan-10-penyakit.cetak', request()->all()) }}" target="_blank"
+                class="bg-green-600 text-white rounded-md px-6 py-2.5 text-sm font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors duration-200 flex items-center shadow-md">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
+                Cetak Laporan (PDF)
+            </a>
+        </div>
     </div>
 @endsection

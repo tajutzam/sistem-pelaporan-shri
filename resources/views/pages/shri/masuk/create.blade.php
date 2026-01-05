@@ -10,14 +10,13 @@
                 <div>
                     <label for="no_rekam_medis" class="block font-medium">No. Rekam Medis</label>
                     <div class="relative">
-                        <input type="text" name="no_rekam_medis" id="no_rekam_medis"
+                        <input maxlength="8" type="text" name="no_rekam_medis" id="no_rekam_medis"
                             class="w-full border border-gray-300 rounded px-4 py-2 pr-10 focus:outline-none" />
                         <div class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-gray-500">
                             <i class="fas fa-search"></i>
                         </div>
                     </div>
                 </div>
-
                 <div>
                     <label for="nama_pasien" class="block font-medium">Nama Pasien</label>
                     <input type="text" name="nama_pasien" id="nama_pasien"
@@ -64,21 +63,21 @@
                 </div>
 
                 <div>
-                    <label for="ruang_perawatan" class="block font-medium">Ruang Perawatan</label>
-                    <input type="text" name="ruang_perawatan" id="ruang_perawatan"
-                        class="w-full border border-gray-300 rounded px-4 py-2 bg-gray-200 cursor-not-allowed" readonly />
-                </div>
-
-                <div>
                     <label for="kelas_perawatan" class="block font-medium">Kelas Perawatan</label>
                     <select name="kelas_perawatan" id="kelas_perawatan"
                         class="w-full border border-gray-300 rounded px-4 py-2">
                         <option value="">Pilih salah satu</option>
-                        @foreach ($ruangans as $item)
-                            <option value="{{ $item->id }}" data-nama="{{ $item->nama_ruangan }}">
-                                {{ $item->kelas_ruangan }}
-                            </option>
+                        @foreach ($kelas as $item)
+                            <option value="{{ $item->id }}">{{ $item->name }}</option>
                         @endforeach
+                    </select>
+                </div>
+
+                <div>
+                    <label for="ruang_perawatan" class="block font-medium">Ruang Perawatan</label>
+                    <select name="ruang_perawatan" id="ruang_perawatan"
+                        class="w-full border border-gray-300 rounded px-4 py-2">
+                        <option value="">Pilih Kelas Dulu</option>
                     </select>
                 </div>
 
@@ -96,7 +95,6 @@
                     <label for="dpjp" class="block font-medium">DPJP</label>
                     <select name="dpjp" id="dpjp" class="w-full border border-gray-300 rounded px-4 py-2">
                         <option value="">Pilih salah satu</option>
-                        <!-- Tambahkan opsi sesuai data -->
                         @foreach ($dpjps as $item)
                             <option value="{{$item->id}}">{{$item->nama_lengkap}}</option>
                         @endforeach
@@ -107,19 +105,20 @@
 
         <!-- Tombol -->
         <div class="mt-6 flex justify-end gap-4">
-            <a href="{{ back() }}" class="bg-gray-700 text-white px-6 py-2 rounded hover:bg-gray-800">Kembali</a>
+            <a href="{{ route('register-shri.masuk.view') }}"
+                class="bg-gray-700 text-white px-6 py-2 rounded hover:bg-gray-800">Kembali</a>
             <button type="submit" class="bg-gray-700 text-white px-6 py-2 rounded hover:bg-gray-800">Simpan</button>
         </div>
     </form>
 @endsection
 
 @push('js')
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
+        const kelasData = @json($kelas);
+
         $(document).ready(function () {
             $('#no_rekam_medis').on('input', function () {
                 let query = $(this).val();
-
                 if (query.length > 2) {
                     $.ajax({
                         url: "{{ url('/api/pasien/search') }}",
@@ -146,14 +145,53 @@
                 }
             });
 
-
             $('#kelas_perawatan').on('change', function () {
-                const selectedOption = $(this).find('option:selected');
-                const namaRuangan = selectedOption.data('nama') || '';
+                const kelasId = $(this).val();
+                const ruangSelect = $('#ruang_perawatan');
+                ruangSelect.empty();
 
-                $('#ruang_perawatan').val(namaRuangan);
+                if (!kelasId) {
+                    ruangSelect.append('<option value="">Pilih Kelas Dulu</option>');
+                    return;
+                }
+
+                const selectedKelas = kelasData.find(k => k.id == kelasId);
+
+                if (selectedKelas && selectedKelas.ruangans.length > 0) {
+                    ruangSelect.append('<option value="">Pilih Ruangan</option>');
+                    selectedKelas.ruangans.forEach(r => {
+                        ruangSelect.append(`<option value="${r.id}">${r.nama_ruangan}</option>`);
+                    });
+                } else {
+                    ruangSelect.append('<option value="">Tidak ada ruangan tersedia</option>');
+                }
             });
 
+            function getJakartaDate(dateString = null) {
+                let date = dateString ? new Date(dateString) : new Date();
+                let jakarta = new Date(date.toLocaleString("en-US", { timeZone: "Asia/Jakarta" }));
+                return jakarta;
+            }
+
+            function formatDate(dateObj) {
+                let yyyy = dateObj.getFullYear();
+                let mm = String(dateObj.getMonth() + 1).padStart(2, "0");
+                let dd = String(dateObj.getDate()).padStart(2, "0");
+                return `${yyyy}-${mm}-${dd}`;
+            }
+            const urlParams = new URLSearchParams(window.location.search);
+            const tanggalSensus = urlParams.get('tanggal_sensus');
+
+            if (tanggalSensus) {
+                let sensusJakarta = getJakartaDate(tanggalSensus);
+                $('#tanggal_masuk').val(formatDate(sensusJakarta));
+                $('#tanggal_masuk').prop("readonly", true);
+
+            } else {
+                let todayJakarta = getJakartaDate();
+                $('#tanggal_masuk').val(formatDate(todayJakarta));
+                $('#tanggal_masuk').prop("readonly", true);
+            }
         });
     </script>
 @endpush
