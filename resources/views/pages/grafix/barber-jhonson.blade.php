@@ -24,7 +24,8 @@
                         <option value="">Pilih Tahun</option>
                         @for ($year = date('Y'); $year >= 2019; $year--)
                             <option value="{{ $year }}" {{ $year == date('Y') ? 'selected' : '' }}>
-                                {{ $year }}</option>
+                                {{ $year }}
+                            </option>
                         @endfor
                     </select>
                 </div>
@@ -569,138 +570,46 @@
         }
 
         function printChart() {
-            if (!barberChart || barberChart.data.datasets.length === 0) {
-                alert('Tidak ada grafik untuk dicetak. Silakan preview chart terlebih dahulu.');
-                return;
-            }
-
+            // Ambil data dari input dan chart
             const canvas = document.getElementById('barberChart');
             const dataURL = canvas.toDataURL('image/png', 1.0);
-            const chartTitle = document.getElementById('chartTitle').textContent;
-            const chartSubtitle = document.getElementById('chartSubtitle').textContent;
 
-            const bor = document.getElementById('borInput').value;
-            const avlos = document.getElementById('avlosInput').value;
-            const bto = document.getElementById('btoInput').value;
-            const toi = document.getElementById('toiInput').value;
-            const status = document.getElementById('dataStatus').textContent;
+            const params = {
+                ruangan: document.getElementById('ruanganSelect').value || 'Seluruh Ruangan',
+                tahun: document.getElementById('tahunSelect').value,
+                bulan: document.getElementById('bulanSelect').value,
+                bor: document.getElementById('borInput').value,
+                avlos: document.getElementById('avlosInput').value,
+                bto: document.getElementById('btoInput').value,
+                toi: document.getElementById('toiInput').value,
+                chartImage: dataURL // Kirim gambar chart sebagai Base64
+            };
 
-            const printWindow = window.open('', '_blank');
-            printWindow.document.write(`
-                        <html>
-                            <head>
-                                <title>${chartTitle}</title>
-                                <style>
-                                    body {
-                                        margin: 0;
-                                        padding: 20px;
-                                        text-align: center;
-                                        font-family: Arial, sans-serif;
-                                    }
-                                    h1 {
-                                        color: #333;
-                                        margin-bottom: 10px;
-                                        font-size: 24px;
-                                    }
-                                    h2 {
-                                        color: #666;
-                                        margin-bottom: 20px;
-                                        font-size: 18px;
-                                        font-weight: normal;
-                                    }
-                                    .status {
-                                        background: #f0f9ff;
-                                        border: 1px solid #0ea5e9;
-                                        padding: 8px;
-                                        margin: 10px 0;
-                                        border-radius: 5px;
-                                        color: #0ea5e9;
-                                        font-weight: bold;
-                                    }
-                                    img {
-                                        max-width: 100%;
-                                        height: auto;
-                                        margin: 20px 0;
-                                        border: 1px solid #ddd;
-                                        border-radius: 8px;
-                                    }
-                                    .indicators {
-                                        display: flex;
-                                        justify-content: center;
-                                        gap: 30px;
-                                        margin: 20px 0;
-                                        flex-wrap: wrap;
-                                    }
-                                    .indicator {
-                                        text-align: center;
-                                        padding: 15px;
-                                        border: 2px solid #ddd;
-                                        border-radius: 8px;
-                                        min-width: 100px;
-                                        background: #f8fafc;
-                                    }
-                                    .indicator-label {
-                                        font-weight: bold;
-                                        margin-bottom: 8px;
-                                        color: #475569;
-                                    }
-                                    .indicator-value {
-                                        font-size: 20px;
-                                        color: #1e293b;
-                                        font-weight: bold;
-                                    }
-                                    .footer {
-                                        margin-top: 30px;
-                                        color: #666;
-                                        font-size: 12px;
-                                        border-top: 2px solid #ddd;
-                                        padding-top: 15px;
-                                        text-align: center;
-                                    }
-                                    @media print {
-                                        body { padding: 10px; }
-                                        .status { background: white !important; }
-                                    }
-                                </style>
-                            </head>
-                            <body>
-                                <h1>${chartTitle}</h1>
-                                <h2>${chartSubtitle}</h2>
-                                <div class="status">Sumber Data: ${status}</div>
+            // Buat form hidden untuk POST data (karena dataURL gambar sangat panjang)
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{{ route('barber-johnson.print') }}';
+            form.target = '_blank'; // Buka di tab baru
 
-                                <div class="indicators">
-                                    <div class="indicator">
-                                        <div class="indicator-label">BOR (%)</div>
-                                        <div class="indicator-value">${bor}</div>
-                                    </div>
-                                    <div class="indicator">
-                                        <div class="indicator-label">AvLOS (Hari)</div>
-                                        <div class="indicator-value">${avlos}</div>
-                                    </div>
-                                    <div class="indicator">
-                                        <div class="indicator-label">BTO (Kali)</div>
-                                        <div class="indicator-value">${bto}</div>
-                                    </div>
-                                    <div class="indicator">
-                                        <div class="indicator-label">TOI (Hari)</div>
-                                        <div class="indicator-value">${toi}</div>
-                                    </div>
-                                </div>
+            // CSRF Token
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = '_token';
+            csrfInput.value = '{{ csrf_token() }}';
+            form.appendChild(csrfInput);
 
-                                <img src="${dataURL}" alt="Barber Johnson Chart">
+            // Tambahkan semua parameter ke form
+            for (const key in params) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = key;
+                input.value = params[key];
+                form.appendChild(input);
+            }
 
-                                <div class="footer">
-                                    <p><strong>Dicetak pada:</strong> ${new Date().toLocaleString('id-ID')}</p>
-                                    <p>RSUD Reda Bolo - Sistem Informasi Manajemen Rumah Sakit</p>
-                                    <p><em>Zona efisiensi ideal: TOI 1-3 hari, AvLOS 2-6 hari</em></p>
-                                </div>
-                            </body>
-                        </html>
-                    `);
-            printWindow.document.close();
-            setTimeout(() => {
-                printWindow.print();
-            }, 1000);
+            document.body.appendChild(form);
+            form.submit();
+            document.body.removeChild(form);
         }
     </script>
 @endsection

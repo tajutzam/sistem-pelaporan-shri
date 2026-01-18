@@ -91,6 +91,8 @@ Route::middleware('auth')->group(function () {
     Route::prefix('grafik')->group(function () {
         Route::get("kunjungan-pasien", [GrafixController::class, "kunjungan"])->name('grafik.kunjungan');
         Route::get('barber-johnson', [GrafixController::class, "barberJohnson"])->name('grafik.barberJhonson');
+        Route::post('/barber-johnson/print', [GrafixController::class, 'barberPrint'])->name('barber-johnson.print');
+        Route::post('/grafik-kunjungan/print', [GrafixController::class, 'kunjunganPrint'])->name('grafik.kunjungan.print');
     });
 
     Route::get("profile", [ProfileController::class, "index"])->name('profile');

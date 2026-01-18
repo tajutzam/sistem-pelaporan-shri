@@ -7,7 +7,6 @@
         @csrf
         @method('PUT')
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Kiri -->
             <div class="space-y-4">
                 <div>
                     <label for="no_rekam_medis" class="block font-medium">No. Rekam Medis</label>

@@ -182,7 +182,6 @@ class GrafixController extends Controller
     public function getData(Request $request)
     {
         $request->validate([
-            // Diubah menjadi nullable untuk mendukung "Semua Ruangan"
             'ruangan' => 'nullable|string|exists:ruangans,nama_ruangan',
             'tahun' => 'required|numeric',
             'bulan' => 'nullable|numeric|between:1,12'
@@ -192,8 +191,6 @@ class GrafixController extends Controller
         $bulan = $request->bulan;
         $namaRuangan = $request->ruangan;
 
-        // Logic: Jika ruangan diisi, ambil ID ruangan tersebut saja. 
-        // Jika kosong, ambil SEMUA ID ruangan yang ada.
         if ($namaRuangan) {
             $ruanganIds = Ruangan::where('nama_ruangan', $namaRuangan)->pluck('id');
         } else {
@@ -211,90 +208,111 @@ class GrafixController extends Controller
     }
 
 
-
     private function calculateIndikator($ruanganIds, $tahun, $bulan = null)
     {
-        // 1. Ambil Data SHRI berdasarkan kumpulan ID ruangan (bisa 1 ruangan atau semua)
-        $query = Shri::with(['shriKeluar', 'pindah'])
-            ->whereIn('kelas_perawatan_id', $ruanganIds)
-            ->whereYear('tanggal_masuk', $tahun);
-
         if ($bulan) {
-            $query->whereMonth('tanggal_masuk', $bulan);
-        }
-
-        $shriData = $query->get();
-
-        // 2. Jumlah bed untuk semua ID yang difilter
-        $jumlahTempat = Ruangan::whereIn('id', $ruanganIds)->sum('jumlah_tempat_tidur');
-
-        // Default sAFETY jika master data kosong
-        if ($jumlahTempat <= 0) {
-            $jumlahTempat = 1;
-        }
-
-        // 3. Hitung periode hari
-        if ($bulan) {
-            $periodeDays = Carbon::createFromDate($tahun, $bulan, 1)->daysInMonth;
+            $startDate = Carbon::createFromDate($tahun, $bulan, 1)->startOfDay();
+            $endDate = Carbon::createFromDate($tahun, $bulan, 1)->endOfMonth()->endOfDay();
         } else {
-            $periodeDays = Carbon::createFromDate($tahun, 1, 1)->isLeapYear() ? 366 : 365;
+            $startDate = Carbon::createFromDate($tahun, 1, 1)->startOfDay();
+            $endDate = Carbon::createFromDate($tahun, 12, 31)->endOfDay();
         }
 
-        $totalPasienKeluar = 0;
-        $totalHariRawat = 0;
-        $totalPasienMeninggal = 0;
-
-        foreach ($shriData as $shri) {
-            if ($shri->shriKeluar) {
-                $totalPasienKeluar++;
-                $masuk = Carbon::parse($shri->tanggal_masuk);
-                $keluar = Carbon::parse($shri->shriKeluar->tanggal_keluar);
-
-                // Standar RS: Hari yang sama dihitung 1
-                $diff = $keluar->diffInDays($masuk);
-                $lamaRawat = $diff <= 0 ? 1 : $diff;
-
-                $totalHariRawat += $lamaRawat;
-
-                // Pengecekan cara keluar (Meninggal)
-                $caraKeluar = strtolower($shri->shriKeluar->cara_keluar);
-                if (str_contains($caraKeluar, 'meninggal') || str_contains($caraKeluar, 'mati')) {
-                    $totalPasienMeninggal++;
-                }
-            }
+        // Batasi sampai hari ini jika periode mencakup masa depan
+        if ($endDate->greaterThan(Carbon::today()->endOfDay())) {
+            $endDate = Carbon::today()->endOfDay();
         }
 
-        // 4. Kalkulasi Indikator Barber Johnson
-        // BOR = (Hari Perawatan / (Bed * Periode)) * 100
-        $bor = ($jumlahTempat * $periodeDays) > 0
-            ? ($totalHariRawat / ($jumlahTempat * $periodeDays)) * 100
-            : 0;
+        $startDateString = $startDate->toDateTimeString();
+        $endDateString = $endDate->toDateTimeString();
+        $endDateOnly = $endDate->format('Y-m-d');
 
-        // AvLOS = Hari Perawatan / Pasien Keluar
-        $avlos = $totalPasienKeluar > 0
-            ? $totalHariRawat / $totalPasienKeluar
-            : 0;
+        // 2. Hitung jumlah hari dalam periode (t)
+        $periodeDays = $startDate->diffInDays($endDate->copy()->startOfDay()) + 1;
 
-        // BTO = Pasien Keluar / Bed
-        $bto = $jumlahTempat > 0
-            ? $totalPasienKeluar / $jumlahTempat
-            : 0;
+        // 3. Ambil Total Tempat Tidur
+        $jumlahTempat = Ruangan::whereIn('id', $ruanganIds)->sum('jumlah_tempat_tidur');
+        if ($jumlahTempat <= 0)
+            $jumlahTempat = 1;
 
-        // TOI = ((Bed * Periode) - Hari Perawatan) / Pasien Keluar
-        $toi = $totalPasienKeluar > 0
-            ? (($jumlahTempat * $periodeDays) - $totalHariRawat) / $totalPasienKeluar
-            : 0;
+        // 4. Query Statistik dengan Raw SQL (Sesuai rumus getComparisonChartData)
+        $stats = \DB::table('shris as s')
+            ->leftJoin('shri_keluar as sk', 's.id', '=', 'sk.shri_id')
+            ->leftJoin('shri_pindah as sp', 's.id', '=', 'sp.shri_id')
+            ->whereIn('s.kelas_perawatan_id', $ruanganIds)
+            ->where(function ($q) use ($startDateString, $endDateString) {
+                $q->whereBetween('s.tanggal_masuk', [$startDateString, $endDateString])
+                    ->orWhere(function ($sub) use ($startDateString, $endDateString) {
+                        $sub->where('s.tanggal_masuk', '<=', $endDateString)
+                            ->where(function ($endCheck) use ($startDateString) {
+                                $endCheck->whereNull('sk.tanggal_keluar')
+                                    ->orWhere('sk.tanggal_keluar', '>=', $startDateString);
+                            });
+                    });
+            })
+            ->select([
+                // Hari Perawatan (HP)
+                \DB::raw('COALESCE(SUM(
+                CASE
+                    WHEN s.status = "keluar" AND sk.tanggal_keluar IS NOT NULL 
+                        THEN DATEDIFF(LEAST(sk.tanggal_keluar, "' . $endDateOnly . '"), GREATEST(s.tanggal_masuk, "' . $startDateString . '")) + 1
+                    WHEN s.status = "pindah" AND sp.tanggal_pindah IS NOT NULL 
+                        THEN DATEDIFF(LEAST(sp.tanggal_pindah, "' . $endDateOnly . '"), GREATEST(s.tanggal_masuk, "' . $startDateString . '")) + 1
+                    WHEN s.status = "masuk" 
+                        THEN DATEDIFF("' . $endDateOnly . '", GREATEST(s.tanggal_masuk, "' . $startDateString . '")) + 1
+                    ELSE 0
+                END
+            ), 0) as total_hp'),
+
+                // Lama Dirawat (LD) - Hanya untuk yang keluar di periode ini
+                \DB::raw('COALESCE(SUM(
+                CASE
+                    WHEN s.status = "keluar" AND sk.tanggal_keluar IS NOT NULL AND sk.tanggal_keluar BETWEEN "' . $startDateString . '" AND "' . $endDateString . '"
+                        THEN CAST(REPLACE(sk.lama_dirawat, " hari", "") AS UNSIGNED)
+                    ELSE 0
+                END
+            ), 0) as total_ld'),
+
+                \DB::raw('COUNT(CASE WHEN s.status = "keluar" AND sk.tanggal_keluar BETWEEN "' . $startDateString . '" AND "' . $endDateString . '" THEN 1 END) as total_keluar')
+            ])->first();
+
+        $hp = (float) $stats->total_hp;
+        $ld = (float) $stats->total_ld;
+        $keluar = (int) $stats->total_keluar;
+
+        $bor = ($jumlahTempat * $periodeDays) > 0 ? ($hp / ($jumlahTempat * $periodeDays)) * 100 : 0;
+        $avlos = $keluar > 0 ? $ld / $keluar : 0;
+        $bto = $jumlahTempat > 0 ? $keluar / $jumlahTempat : 0;
+        $toi = $keluar > 0 ? (($jumlahTempat * $periodeDays) - $hp) / $keluar : 0;
 
         return [
             'bor' => round($bor, 2),
             'avlos' => round($avlos, 2),
             'bto' => round($bto, 2),
             'toi' => round($toi, 2),
-            'total_pasien_keluar' => $totalPasienKeluar,
-            'total_hari_rawat' => $totalHariRawat,
+            'total_pasien_keluar' => $keluar,
+            'total_hari_rawat' => $hp,
+            'total_lama_dirawat' => $ld,
             'jumlah_tempat' => $jumlahTempat,
             'periode_hari' => $periodeDays
         ];
+    }
+
+    public function barberPrint(Request $request)
+    {
+        $data = $request->all();
+        $monthNames = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+
+        $data['periode'] = $request->bulan ? $monthNames[(int) $request->bulan] . ' ' . $request->tahun : $request->tahun;
+
+        return view('pages.grafix.babrber_johnson_print', $data);
+    }
+
+
+    public function kunjunganPrint(Request $request)
+    {
+        // Menerima data dari form dinamis JS
+        return view('pages.grafix.print_kunjungan', $request->all());
     }
 
 

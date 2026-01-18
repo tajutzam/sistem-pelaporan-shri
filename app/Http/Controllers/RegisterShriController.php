@@ -348,7 +348,7 @@ class RegisterShriController extends Controller
             'lama_dirawat' => 'required|numeric',
         ]);
 
-        $ruangan = Ruangan::where('id', $validated['ruangan_tujuan'])->first();
+        $ruangan = Ruangan::where('id', $validated['ruangan_tujuan'])->withoutGlobalScopes()->first();
 
         $pindah = ShriPindah::findOrFail($validated['id']);
         $pindah->update([

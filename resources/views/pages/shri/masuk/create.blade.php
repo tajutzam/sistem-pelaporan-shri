@@ -40,7 +40,7 @@
 
                 <div>
                     <label for="status_pasien" class="block font-medium">Status Pasien</label>
-                    <input type="text" name="status_pasien" id="status_pasien" value="BARU" readonly
+                    <input type="text" name="status_pasien" id="status_pasien" readonly
                         class="w-full border border-gray-300 rounded px-4 py-2" />
                 </div>
             </div>

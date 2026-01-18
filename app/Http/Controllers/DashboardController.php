@@ -122,47 +122,82 @@ class DashboardController extends Controller
         return $chartData;
     }
 
-    private function calculateGroupedIndicators($ruanganIds, $tahun, $bulan)
+    private function calculateGroupedIndicators($ruanganIds, $year, $month)
     {
-        $shriData = Shri::with(['shriKeluar', 'pindah'])
-            ->whereIn('kelas_perawatan_id', $ruanganIds)
-            ->whereYear('tanggal_masuk', $tahun)
-            ->whereMonth('tanggal_masuk', $bulan)
-            ->get();
+        // 1. Tentukan Range Tanggal (Sama persis dengan logika Laporan)
+        $startDate = Carbon::createFromDate($year, $month, 1)->startOfDay();
+        $endDate = Carbon::createFromDate($year, $month, 1)->endOfMonth()->endOfDay();
 
-        $jumlahTempat = Ruangan::whereIn('id', $ruanganIds)->sum('jumlah_tempat_tidur');
-        $periodeDays = Carbon::createFromDate($tahun, $bulan, 1)->daysInMonth;
-
-        $totalPasienKeluar = 0;
-        $totalHariRawat = 0;
-
-        foreach ($shriData as $shri) {
-            if ($shri->shriKeluar) {
-                $totalPasienKeluar++;
-
-                $masuk = Carbon::parse($shri->tanggal_masuk);
-                $keluar = Carbon::parse($shri->shriKeluar->tanggal_keluar);
-                $lamaRawat = $keluar->diffInDays($masuk) + 1;
-
-                $totalHariRawat += $lamaRawat;
-            }
+        // Batasi sampai hari ini jika bulan berjalan
+        if ($endDate->greaterThan(Carbon::today()->endOfDay())) {
+            $endDate = Carbon::today()->endOfDay();
         }
 
-        $bor = $jumlahTempat > 0 && $periodeDays > 0
-            ? ($totalHariRawat / ($jumlahTempat * $periodeDays)) * 100
+        $endDateString = $endDate->format('Y-m-d');
+
+        // Hitung jumlah hari dalam periode (t)
+        // startOfDay() penting agar tanggal sama dihitung 1 hari
+        $jumlahPeriode = $startDate->diffInDays($endDate->copy()->startOfDay()) + 1;
+
+        // 2. Ambil Total Tempat Tidur berdasarkan ID
+        $jumlahTempatTidur = Ruangan::whereIn('id', $ruanganIds)->sum('jumlah_tempat_tidur');
+
+        // 3. Query Statistik (Copy logic Raw SQL dari getLaporanIndikator)
+        // Bedanya: Kita filter pakai whereIn('kelas_perawatan_id')
+        $stats = \DB::table('shris as s')
+            ->leftJoin('shri_keluar as sk', 's.id', '=', 'sk.shri_id')
+            ->leftJoin('shri_pindah as sp', 's.id', '=', 'sp.shri_id')
+            ->whereIn('s.kelas_perawatan_id', $ruanganIds) // Filter berdasarkan array ID
+            ->where(function ($q) use ($startDate, $endDate) {
+                // Logika irisan tanggal: Masuk dalam periode ATAU masuk sebelumnya & belum keluar sebelum start
+                $q->whereBetween('s.tanggal_masuk', [$startDate, $endDate])
+                    ->orWhere(function ($sub) use ($startDate, $endDate) {
+                    $sub->where('s.tanggal_masuk', '<=', $endDate)
+                        ->where(function ($endCheck) use ($startDate) {
+                            $endCheck->whereNull('sk.tanggal_keluar') // Belum keluar
+                                ->orWhere('sk.tanggal_keluar', '>=', $startDate); // Atau keluar di dalam periode
+                        });
+                });
+            })
+            ->select([
+                // Rumus Hari Perawatan (HP) - Sesuai standar Depkes
+                \DB::raw('COALESCE(SUM(
+                CASE
+                    WHEN s.status = "keluar" AND sk.tanggal_keluar IS NOT NULL 
+                        THEN DATEDIFF(LEAST(sk.tanggal_keluar, "' . $endDateString . '"), GREATEST(s.tanggal_masuk, "' . $startDate . '")) + 1
+                    WHEN s.status = "pindah" AND sp.tanggal_pindah IS NOT NULL 
+                        THEN DATEDIFF(LEAST(sp.tanggal_pindah, "' . $endDateString . '"), GREATEST(s.tanggal_masuk, "' . $startDate . '")) + 1
+                    WHEN s.status = "masuk" 
+                        THEN DATEDIFF("' . $endDateString . '", GREATEST(s.tanggal_masuk, "' . $startDate . '")) + 1
+                    ELSE 0
+                END
+            ), 0) as total_hp'),
+
+                // Rumus Lama Dirawat (LD) - Hanya untuk pasien pulang
+                \DB::raw('COALESCE(SUM(
+                CASE
+                    WHEN s.status = "keluar" AND sk.tanggal_keluar IS NOT NULL AND sk.tanggal_keluar BETWEEN "' . $startDate . '" AND "' . $endDate . '"
+                        THEN CAST(REPLACE(sk.lama_dirawat, " hari", "") AS UNSIGNED)
+                    ELSE 0
+                END
+            ), 0) as total_ld'),
+
+                \DB::raw('COUNT(CASE WHEN s.status = "keluar" AND sk.tanggal_keluar BETWEEN "' . $startDate . '" AND "' . $endDate . '" THEN 1 END) as total_keluar')
+            ])->first();
+
+        $hp = (float) $stats->total_hp;
+        $ld = (float) $stats->total_ld;
+        $keluar = (int) $stats->total_keluar; 
+
+        $bor = ($jumlahTempatTidur * $jumlahPeriode) > 0
+            ? ($hp / ($jumlahTempatTidur * $jumlahPeriode)) * 100
             : 0;
 
-        $avlos = $totalPasienKeluar > 0
-            ? $totalHariRawat / $totalPasienKeluar
-            : 0;
+        $avlos = $keluar > 0 ? $ld / $keluar : 0;
 
-        $bto = $jumlahTempat > 0
-            ? $totalPasienKeluar / $jumlahTempat
-            : 0;
+        $bto = $jumlahTempatTidur > 0 ? $keluar / $jumlahTempatTidur : 0;
 
-        $toi = $totalPasienKeluar > 0
-            ? (($jumlahTempat * $periodeDays) - $totalHariRawat) / $totalPasienKeluar
-            : 0;
+        $toi = $keluar > 0 ? (($jumlahTempatTidur * $jumlahPeriode) - $hp) / $keluar : 0;
 
         return [
             'bor' => round($bor, 2),

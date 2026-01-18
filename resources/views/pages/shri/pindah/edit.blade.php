@@ -14,7 +14,7 @@
                 <div>
                     <label>No. Rekam Medis</label>
                     <input type="text" class="w-full bg-gray-300 p-2 rounded"
-                        value="{{ $pindah->shri->pasien->no_rekam_medis ?? '-' }}" disabled>
+                        value="{{ $pindah->shri->pasien->no_rekam_medis ?? '-' }}" readonly>
                 </div>
 
                 <div>
@@ -26,7 +26,7 @@
                 <div>
                     <label>Nama Pasien</label>
                     <input type="text" class="w-full bg-gray-300 p-2 rounded"
-                        value="{{ $pindah->shri->pasien->nama_pasien ?? '-' }}" disabled>
+                        value="{{ $pindah->shri->pasien->nama_pasien ?? '-' }}" readonly>
                 </div>
 
                 <div>
@@ -34,8 +34,7 @@
                     <select class="w-full p-2 rounded border" name="kelas_tujuan" id="kelasSelect">
                         <option value="">Pilih salah satu</option>
                         @foreach ($kelas as $k)
-                            <option value="{{ $k->id }}"
-                                {{ $pindah->ruangan->kelas->id == $k->id ? 'selected' : '' }}>
+                            <option value="{{ $k->id }}" {{ $pindah->ruangan->kelas->id == $k->id ? 'selected' : '' }}>
                                 {{ $k->name }}
                             </option>
                         @endforeach
@@ -58,19 +57,19 @@
                 <div>
                     <label>Tanggal Masuk</label>
                     <input type="text" class="w-full bg-gray-300 p-2 rounded" id="tanggalMasuk"
-                        value="{{ $pindah->shri->tanggal_masuk }}" disabled>
+                        value="{{ $pindah->shri->tanggal_masuk }}" readonly>
                 </div>
 
                 <div>
                     <label>Lama Dirawat</label>
                     <input type="number" name="lama_dirawat" class="w-full p-2 bg-gray-300 rounded border" id="lamaDirawat"
-                        value="{{ $pindah->lama_dirawat }}" disabled>
+                        value="{{ $pindah->lama_dirawat }}" readonly>
                 </div>
 
                 <div class="col-span-2">
                     <label>Ruangan Sebelumnya</label>
-                    <input type="text" class="w-full bg-gray-300 p-2 rounded"
-                        value="{{ $pindah->shri->ruang_perawatan }}" disabled />
+                    <input type="text" class="w-full bg-gray-300 p-2 rounded" value="{{ $pindah->shri->ruang_perawatan }}"
+                        readonly />
                 </div>
             </div>
 
@@ -85,7 +84,7 @@
 
 @push('js')
     <script>
-        $(function() {
+        $(function () {
             let kelasData = @json($kelas);
 
             // Populate ruangan saat halaman dibuka
@@ -95,13 +94,13 @@
             }
 
             // Jika kelas berubah → load ruangan
-            $("#kelasSelect").on("change", function() {
+            $("#kelasSelect").on("change", function () {
                 let kelasId = $(this).val();
                 loadRuangan(kelasId);
             });
 
             // Hitung lama dirawat
-            $("#tanggalPindah").on("change", function() {
+            $("#tanggalPindah").on("change", function () {
                 calculateLamaDirawat();
             });
 
@@ -111,7 +110,7 @@
 
                 let kelas = kelasData.find(k => k.id == kelasId);
                 if (kelas && kelas.ruangans) {
-                    $.each(kelas.ruangans, function(i, ruangan) {
+                    $.each(kelas.ruangans, function (i, ruangan) {
                         $("#ruanganSelect").append(
                             `<option value="${ruangan.id}">${ruangan.nama_ruangan}</option>`
                         );

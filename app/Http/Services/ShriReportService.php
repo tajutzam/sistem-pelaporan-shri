@@ -181,7 +181,7 @@ class ShriReportService
 
         // 5. Pasien Keluar Hidup
         $pasien_keluar_hidup = ShriKeluar::whereDate('tanggal_keluar', $tanggal)
-            ->whereIn('cara_keluar', ['APS', 'APD'])
+            ->whereIn('cara_keluar', ['APS', 'APD','dirujuk'])
             ->whereHas('shri', $baseQuery)
             ->count();
 

@@ -11,42 +11,42 @@
     @endphp
 
     <div x-data="{
-                            open: false,
-                            selectedItem: {
-                                no_rekam_medis: '',
-                                shri_id: '',
-                                nama_pasien: '',
-                                jenis_kelamin: '',
-                                tanggal_masuk: '',
-                                tanggal_keluar: '',
-                                ruangan: '',
-                                lama_dirawat: ''
-                            },
-
-                            // PANGGIL GLOBAL FUNCTION
-                            calculateLamaDirawat() {
-                                this.selectedItem = window.calculateLamaDirawatKeluar(this.selectedItem);
-                            },
-
-                            initTanggalKeluarRange() {
-                                window.setTanggalKeluarRange(this.selectedItem.tanggal_masuk);
-                            },
-
-                            closeModal() {
-                                this.open = false;
-                                $('#diagnosa_id').val(null).trigger('change');
-                                this.selectedItem = {
-                                    no_rekam_medis: '',
-                                    shri_id: '',
-                                    nama_pasien: '',
-                                    jenis_kelamin: '',
-                                    tanggal_masuk: '',
-                                    tanggal_keluar: '',
-                                    ruangan: '',
-                                    lama_dirawat: ''
-                                };
-                            },
-                        }">
+        open: false,
+        selectedItem: {
+            no_rekam_medis: '',
+            shri_id: '',
+            nama_pasien: '',
+            jenis_kelamin: '',
+            tanggal_masuk: '',
+            tanggal_keluar: '',
+            ruangan: '',
+            lama_dirawat: ''
+        },
+    
+        // PANGGIL GLOBAL FUNCTION
+        calculateLamaDirawat() {
+            this.selectedItem = window.calculateLamaDirawatKeluar(this.selectedItem);
+        },
+    
+        initTanggalKeluarRange() {
+            window.setTanggalKeluarRange(this.selectedItem.tanggal_masuk);
+        },
+    
+        closeModal() {
+            this.open = false;
+            $('#diagnosa_id').val(null).trigger('change');
+            this.selectedItem = {
+                no_rekam_medis: '',
+                shri_id: '',
+                nama_pasien: '',
+                jenis_kelamin: '',
+                tanggal_masuk: '',
+                tanggal_keluar: '',
+                ruangan: '',
+                lama_dirawat: ''
+            };
+        },
+    }">
 
         <!-- Header -->
         <div class="flex justify-between items-center mt-3 bg-[#34495E] p-4 rounded-lg text-white">
@@ -75,8 +75,7 @@
                 class="bg-gray-100 p-6 rounded-lg w-full max-w-4xl relative"
                 @click.outside.window="if(!$event.target.closest('.select2-container')) closeModal()">
 
-                <form action="{{ route('register-shri.keluar.store') }}" 
-                    method="POST">
+                <form action="{{ route('register-shri.keluar.store') }}" method="POST">
                     @csrf
 
                     <h2 class="text-lg font-semibold underline mb-4">Formulir Pendaftaran Pasien Keluar</h2>
@@ -84,8 +83,8 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">No. Rekam Medis</label>
-                            <input type="text" class="w-full bg-gray-300 p-2 rounded" x-model="selectedItem.no_rekam_medis"
-                                disabled />
+                            <input type="text" class="w-full bg-gray-300 p-2 rounded"
+                                x-model="selectedItem.no_rekam_medis" disabled />
                         </div>
 
                         <input type="hidden" name="shri_id" :value="selectedItem.shri_id">
@@ -114,8 +113,8 @@
 
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Jenis Kelamin</label>
-                            <input type="text" class="w-full bg-gray-300 p-2 rounded" x-model="selectedItem.jenis_kelamin"
-                                disabled />
+                            <input type="text" class="w-full bg-gray-300 p-2 rounded"
+                                x-model="selectedItem.jenis_kelamin" disabled />
                         </div>
 
                         <div>
@@ -128,8 +127,8 @@
 
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Masuk</label>
-                            <input type="text" class="w-full bg-gray-300 p-2 rounded" x-model="selectedItem.tanggal_masuk"
-                                disabled />
+                            <input type="text" class="w-full bg-gray-300 p-2 rounded"
+                                x-model="selectedItem.tanggal_masuk" disabled />
                         </div>
 
                         <div>
@@ -197,35 +196,36 @@
                             <td class="px-4 py-2 border">{{ $ruanganTerakhir->nama_ruangan ?? '-' }}</td>
                             <td class="px-4 py-2 border">{{ optional($ruanganTerakhir->kelas)->name ?? '-' }}</td>
                             <td class="px-4 py-2 border">
-                                <button @click="
-    open = true;
+                                <button class="text-blue-600 underline"
+                                    @click="
+                                        open = true;
 
-    // Ambil tanggal dari URL parameter
-    let urlParams = new URLSearchParams(window.location.search);
-    let tanggalSensusDariUrl = urlParams.get('tanggal_sensus') || '';
+                                        // Ambil tanggal dari URL parameter
+                                        let urlParams = new URLSearchParams(window.location.search);
+                                        let tanggalSensusDariUrl = urlParams.get('tanggal_sensus') || '';
 
-    selectedItem = {
-        no_rekam_medis: '{{ $item->pasien->no_rekam_medis }}',
-        shri_id:        '{{ $item->id }}',
-        nama_pasien:    '{{ $item->pasien->nama_pasien }}',
-        jenis_kelamin:  '{{ $item->pasien->jenis_kelamin }}',
-        tanggal_masuk:  '{{ $item->tanggal_masuk }}',
-        tanggal_keluar: tanggalSensusDariUrl, // SET OTOMATIS DISINI
-        ruangan:        '{{ $ruanganTerakhir->nama_ruangan ?? '-' }}',
-        lama_dirawat:   ''
-    };
+                                        selectedItem = {
+                                            no_rekam_medis: '{{ $item->pasien->no_rekam_medis }}',
+                                            shri_id:        '{{ $item->id }}',
+                                            nama_pasien:    '{{ $item->pasien->nama_pasien }}',
+                                            jenis_kelamin:  '{{ $item->pasien->jenis_kelamin }}',
+                                            tanggal_masuk:  '{{ $item->tanggal_masuk }}',
+                                            tanggal_keluar: tanggalSensusDariUrl, // SET OTOMATIS DISINI
+                                            ruangan:        '{{ $ruanganTerakhir->nama_ruangan ?? '-' }}',
+                                            lama_dirawat:   ''
+                                        };
 
-    // Panggil fungsi JS global untuk set range dan kalkulasi hari
-    setTimeout(() => {
-        initTanggalKeluarRange();
-        calculateLamaDirawat(); // LANGSUNG HITUNG
-    }, 50);
+                                        // Panggil fungsi JS global untuk set range dan kalkulasi hari
+                                        setTimeout(() => {
+                                            initTanggalKeluarRange();
+                                            calculateLamaDirawat(); // LANGSUNG HITUNG
+                                        }, 50);
 
-    // Reset select2
-    setTimeout(() => initSelect2(), 100);
-" class="...">
-    <i class="fa-solid fa-plus"></i> Tambah
-</button>
+                                        // Reset select2
+                                        setTimeout(() => initSelect2(), 100);
+                                    ">
+                                    <i class="fa-solid fa-plus"></i> Tambah
+                                </button>
                             </td>
                         </tr>
                     @endforeach
@@ -259,13 +259,13 @@
                         url: '{{ route('api.diagnosa.search') }}',
                         dataType: 'json',
                         delay: 300, // Delay untuk mengurangi request
-                        data: function (params) {
+                        data: function(params) {
                             return {
                                 q: params.term, // search term
                                 page: params.page || 1
                             };
                         },
-                        processResults: function (data, params) {
+                        processResults: function(data, params) {
                             params.page = params.page || 1;
 
                             return {
@@ -279,36 +279,38 @@
                     },
                     minimumInputLength: 2, // Minimal 2 karakter untuk mulai search
                     language: {
-                        inputTooShort: function () {
+                        inputTooShort: function() {
                             return 'Ketik minimal 2 karakter untuk mencari diagnosa';
                         },
-                        searching: function () {
+                        searching: function() {
                             return 'Mencari diagnosa...';
                         },
-                        noResults: function () {
+                        noResults: function() {
                             return 'Tidak ada diagnosa yang ditemukan';
                         }
                     }
                 });
             }
 
-            $(document).ready(function () {
+            $(document).ready(function() {
                 initSelect2();
             });
 
 
-            window.toJakarta = function (dateString = null) {
+            window.toJakarta = function(dateString = null) {
                 let d = dateString ? new Date(dateString) : new Date();
-                return new Date(d.toLocaleString("en-US", { timeZone: "Asia/Jakarta" }));
+                return new Date(d.toLocaleString("en-US", {
+                    timeZone: "Asia/Jakarta"
+                }));
             };
 
-            window.formatDate = function (d) {
+            window.formatDate = function(d) {
                 return d.getFullYear() + "-" +
                     String(d.getMonth() + 1).padStart(2, "0") + "-" +
                     String(d.getDate()).padStart(2, "0");
             };
 
-            window.setTanggalKeluarRange = function (tanggalMasuk) {
+            window.setTanggalKeluarRange = function(tanggalMasuk) {
                 let masuk = window.toJakarta(tanggalMasuk);
 
                 let sensus = new URLSearchParams(window.location.search).get("tanggal_sensus");
@@ -319,7 +321,7 @@
                     input.max = window.formatDate(maxDate);
                 }
             };
-            window.calculateLamaDirawatKeluar = function (selectedItem) {
+            window.calculateLamaDirawatKeluar = function(selectedItem) {
                 if (!selectedItem.tanggal_keluar || !selectedItem.tanggal_masuk) {
                     selectedItem.lama_dirawat = "";
                     return selectedItem;
@@ -346,7 +348,6 @@
                 selectedItem.lama_dirawat = diff + " hari";
                 return selectedItem;
             };
-
         </script>
     @endpush
 @endsection

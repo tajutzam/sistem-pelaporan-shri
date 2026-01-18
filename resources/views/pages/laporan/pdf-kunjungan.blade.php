@@ -3,159 +3,257 @@
 
 <head>
     <meta charset="utf-8">
-    <title>{{ $title }}</title>
+    <title>Laporan Rekapitulasi Kunjungan Rawat Inap</title>
     <style>
-        body {
+        @page {
+            size: landscape;
+            margin: 1cm;
+        }
+
+    body {
             font-family: Arial, sans-serif;
-            font-size: 12px;
-            margin: 20px;
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .header h1 {
-            font-size: 18px;
+            font-size: 10px;
             margin: 0;
-            text-decoration: underline;
+            color: #333;
         }
 
-        .header p {
-            margin: 5px 0;
+        /* Header Rumah Sakit */
+        .hospital-header {
+            text-align: center;
+            margin-bottom: 30px;
         }
 
-        .filter-info {
-            background-color: #f8f9fa;
-            padding: 10px;
-            border: 1px solid #dee2e6;
-            margin-bottom: 20px;
-            border-radius: 5px;
+        .hospital-header h2 {
+            margin: 0;
+            font-size: 18px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
-        .filter-info h3 {
-            margin: 0 0 10px 0;
+        .hospital-header h3 {
+            margin: 10px 0 0 0;
             font-size: 14px;
+            text-transform: uppercase;
         }
 
-        .filter-info p {
-            margin: 2px 0;
+        /* Meta Data (Ruangan, Tanggal Cetak, dll) */
+        .meta-container {
+            width: 100%;
+            margin-bottom: 10px;
+            overflow: hidden;
         }
 
-        table {
+        .meta-left {
+            float: left;
+            width: 50%;
+        }
+
+        .meta-right {
+            float: right;
+            width: 30%;
+        }
+
+        .meta-table {
+            width: 100%;
+            border: none;
+        }
+
+        .meta-table td {
+            border: none;
+            padding: 2px 0;
+            font-weight: bold;
+            font-size: 11px;
+        }
+
+        /* Tabel Utama */
+        table.main-table {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 20px;
         }
 
-        th,
-        td {
-            border: 1px solid #000;
-            padding: 8px;
-            text-align: left;
-            font-size: 10px;
+        table.main-table th,
+        table.main-table td {
+            border: 1px solid #a0a0a0;
+            padding: 6px 4px;
+            vertical-align: middle;
         }
 
-        th {
-            background-color: #f8f9fa;
+        table.main-table th {
+            background-color: #f2f2f2;
+            text-align: center;
             font-weight: bold;
-            text-align: center;
+            font-size: 9px;
+            text-transform: uppercase;
         }
 
-        .text-center {
-            text-align: center;
+        /* Pewarnaan Status Sesuai Foto */
+        .status-dirawat {
+            color: #2e59d9;
+            font-weight: bold;
         }
 
-        .footer {
+        /* Biru */
+        .status-pindah {
+            color: #f6c23e;
+            font-weight: bold;
+        }
+
+        /* Oranye */
+        .status-keluar {
+            color: #e74a3b;
+            font-weight: bold;
+        }
+
+        /* Merah */
+
+        /* Footer Tanda Tangan */
+        .footer-container {
             margin-top: 30px;
+            width: 100%;
+        }
+
+        .signature-row {
+            width: 100%;
+        }
+
+        .signature-box {
+            display: inline-block;
+            width: 45%;
+            text-align: center;
+            vertical-align: top;
+        }
+
+        .date-location {
             text-align: right;
-        }
-
-        .footer p {
-            margin: 5px 0;
-        }
-
-        .page-break {
-            page-break-after: always;
-        }
-
-        .total-row {
-            background-color: #e9ecef;
+            margin-bottom: 40px;
+            margin-right: 50px;
             font-weight: bold;
+        }
+
+
+        .meta-container {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .meta-left {
+            float: left;
+            width: 50%;
+        }
+
+        .meta-right {
+            float: right;
+            width: 30%;
+        }
+
+        .clearfix::after {
+            content: "";
+            clear: both;
+            display: table;
         }
     </style>
 </head>
 
 <body>
-    <div class="header">
-        <h1>{{ $title }}</h1>
-        <p>Tanggal Cetak: {{ $date }}</p>
+    <div class="hospital-header">
+        <h2>RUMAH SAKIT UMUM DAERAH REDA BOLO</h2>
+        <h3>LAPORAN REKAPITULASI KUNJUNGAN RAWAT INAP</h3>
     </div>
 
-    <table>
+    <div class="meta-container clearfix">
+        <div class="meta-left">
+            <table style="border: none">
+                <tr style="border:none">
+                    <td style="border:none; width:100px; padding:2px">Ruangan</td>
+                    <td style="border:none; padding:2px">: {{ $filter['ruangan'] ?? 'Semua Ruangan' }}</td>
+                </tr>
+                <tr style="border:none">
+                    <td style="border:none; padding:2px">Periode Laporan</td>
+                    <td style="border:none; padding:2px">: {{ $tanggal_mulai ?? '-'  }} s/d {{ $tanggal_akhir ?? '-' }}
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div class="meta-right">
+            <table style="border:none">
+                <tr style="border:none">
+                    <td style="border:none; padding:2px">Tanggal Cetak</td>
+                    <td style="border:none; padding:2px">: {{ date('d/m/Y H:i') }}</td>
+                </tr>
+                <tr style="border:none">
+                    <td style="border:none; padding:2px">User</td>
+                    <td style="border:none; padding:2px">: {{ Auth()->user()->name }}</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+
+    <table class="main-table">
         <thead>
             <tr>
-                <th style="width: 4%;">NO</th>
-
-                <th style="width: 10%;">No RM</th>
-                <th style="width: 12%;">Nama Pasien</th>
-                <th style="width: 8%;">JK</th>
-                <th style="width: 10%;">Ruangan</th>
-                <th style="width: 8%;">Kelas</th>
-                <th style="width: 8%;">Penjaminan</th>
-                <th style="width: 10%;">DPJP</th>
-                <th style="width: 8%;">Tgl Masuk</th>
-                <th style="width: 8%;">Tgl Keluar</th>
-                <th style="width: 6%;">Status</th>
-                <th style="width: 6%;">Status Pasien</th>
-                <th style="width: 6%;">Asal Pasien</th>
-                <th style="width: 8%;">Diagnosa</th>
+                <th width="3%">NO</th>
+                <th width="8%">No Rekam Medis</th>
+                <th width="12%">Nama Pasien</th>
+                <th width="8%">Jenis Kelamin</th>
+                <th width="10%">Ruangan</th>
+                <th width="5%">Kelas</th>
+                <th width="8%">Penjaminan</th>
+                <th width="12%">DPJP</th>
+                <th width="8%">Tanggal Masuk</th>
+                <th width="8%">Tanggal Keluar</th>
+                <th width="7%">Status</th>
+                <th>Diagnosa</th>
             </tr>
         </thead>
         <tbody>
             @forelse($laporanKunjungans as $index => $item)
                 <tr>
-                    <td class="text-center">{{ $index + 1 }}</td>
-                    <td>{{ $item['no_rm'] }}</td>
+                    <td style="text-align:center;">{{ $index + 1 }}</td>
+                    <td style="text-align:center;">{{ $item['no_rm'] }}</td>
                     <td>{{ $item['nama_pasien'] }}</td>
-                    <td class="text-center">{{ $item['jenis_kelamin'] }}</td>
+                    <td>{{ $item['jenis_kelamin'] }}</td>
                     <td>{{ $item['ruangan'] }}</td>
-                    <td class="text-center">{{ $item['kelas'] }}</td>
+                    <td style="text-align:center;">{{ $item['kelas'] }}</td>
                     <td>{{ $item['penjaminan'] }}</td>
                     <td>{{ $item['dpjp'] }}</td>
-                    <td class="text-center">
-                        {{ $item['tanggal_masuk'] ? date('d/m/Y', timestamp: strtotime($item['tanggal_masuk'])) : '-' }}
+                    <td style="text-align:center;">{{ $item['tanggal_masuk'] }}</td>
+                    <td style="text-align:center;">{{ $item['tanggal_keluar'] ?: '-' }}</td>
+                    <td style="text-align:center;">
+                        @php
+                            $statusClass = 'status-' . strtolower($item['status']);
+                        @endphp
+                        <span class="{{ $statusClass }}">{{ ucfirst($item['status']) }}</span>
                     </td>
-                    <td class="text-center">
-                        {{ $item['tanggal_keluar'] ? date('d/m/Y', strtotime($item['tanggal_keluar'])) : '-' }}
-                    </td>
-                    <td class="text-center">{{ ucfirst($item['status']) }}</td>
-                    <td class="text-center">
-                        {{ $item['status_pasien'] }}
-                    </td>
-                    <td class="text-center">
-                        {{ $item['asal_pasien'] }}
-                    </td>
-                    <td>{{ $item['diagnosa'] }}</td>
+                    <td>{{ $item['diagnosa'] ?: '-' }}</td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="12" class="text-center">Tidak ada data yang ditemukan</td>
+                    <td colspan="12" style="text-align:center;">Tidak ada data yang ditemukan</td>
                 </tr>
             @endforelse
         </tbody>
     </table>
+    <div class="footer-container">
+        <table style="width: 100%; border: none;">
+            <tr>
+                <td style="width: 50%; border: none; text-align: center; vertical-align: bottom;">
+                    <p><strong>Petugas Pelaporan</strong></p>
+                    <br><br><br><br><br>
+                    <p><strong>( {{ $pelaporan }} )</strong></p>
+                </td>
 
-    @if (count($laporanKunjungans) > 0)
-    @endif
-
-    <div class="footer">
-        <p>{{ date('d F Y') }}</p>
-        <p>Petugas Pelaporan</p>
-        <br><br><br>
-        <p>(_________________________)</p>
-        <p>NIP: </p>
+                <td style="width: 50%; border: none; text-align: center; vertical-align: top;">
+                    <div style="margin-bottom: 20px;">
+                        <strong>Wee Londa, {{ date('d F Y') }}</strong>
+                    </div>
+                    <p><strong>Kepala Ruangan Rekam Medis</strong></p>
+                    <br><br><br><br><br>
+                    <p><strong>( {{ $namaKepala ?? 'Nama Kepala Ruangan Rekam Medis' }} )</strong></p>
+                </td>
+            </tr>
+        </table>
     </div>
 </body>
 

@@ -20,8 +20,7 @@
                     class="bg-white border border-gray-300 rounded px-3 py-2 w-48 focus:outline-none focus:ring-2 focus:ring-blue-400">
                     <option value="">Semua Ruangan</option>
                     @foreach ($ruangans as $r)
-                        <option value="{{ $r->nama_ruangan }}"
-                            {{ request('ruangan') == $r->nama_ruangan ? 'selected' : '' }}>
+                        <option value="{{ $r->nama_ruangan }}" {{ request('ruangan') == $r->nama_ruangan ? 'selected' : '' }}>
                             {{ $r->nama_ruangan }}
                         </option>
                     @endforeach
@@ -142,31 +141,31 @@
             data: {
                 labels: @json($dataKunjungan['labels']),
                 datasets: [{
-                        label: 'Pasien Baru',
-                        data: @json($dataKunjungan['pasien_baru']),
-                        backgroundColor: '#3498db',
-                        borderColor: '#2980b9',
-                        borderWidth: 1
-                    },
-                    {
-                        label: 'Pasien Lama',
-                        data: @json($dataKunjungan['pasien_lama']),
-                        backgroundColor: '#2ecc71',
-                        borderColor: '#27ae60',
-                        borderWidth: 1
-                    },
-                    {
-                        label: 'Laki-laki (L)',
-                        data: @json($dataKunjungan['laki_laki']),
-                        backgroundColor: '#818cf8',
-                        stack: 'gender'
-                    },
-                    {
-                        label: 'Perempuan (P)',
-                        data: @json($dataKunjungan['perempuan']),
-                        backgroundColor: '#fb7185',
-                        stack: 'gender'
-                    }
+                    label: 'Pasien Baru',
+                    data: @json($dataKunjungan['pasien_baru']),
+                    backgroundColor: '#3498db',
+                    borderColor: '#2980b9',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Pasien Lama',
+                    data: @json($dataKunjungan['pasien_lama']),
+                    backgroundColor: '#2ecc71',
+                    borderColor: '#27ae60',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Laki-laki (L)',
+                    data: @json($dataKunjungan['laki_laki']),
+                    backgroundColor: '#818cf8',
+                    stack: 'gender'
+                },
+                {
+                    label: 'Perempuan (P)',
+                    data: @json($dataKunjungan['perempuan']),
+                    backgroundColor: '#fb7185',
+                    stack: 'gender'
+                }
                 ]
             },
             options: {
@@ -196,13 +195,7 @@
                 plugins: {
                     tooltip: {
                         callbacks: {
-                            afterBody: function(context) {
-                                let total = 0;
-                                context.forEach(function(tooltipItem) {
-                                    total += tooltipItem.parsed.y;
-                                });
-                                return 'Total: ' + total + ' kunjungan';
-                            }
+                            
                         }
                     }
                 }
@@ -217,44 +210,39 @@
             link.click();
         }
 
-        // Function untuk print chart
         function printChart() {
             const canvas = document.getElementById('kunjunganChart');
-            const dataURL = canvas.toDataURL('image/png');
+            const dataURL = canvas.toDataURL('image/png', 1.0);
 
-            const printWindow = window.open('', '_blank');
-            printWindow.document.write(`
-                    <html>
-                    <head>
-                        <title>Grafik Kunjungan Pasien</title>
-                        <style>
-                            body {
-                                margin: 20px;
-                                text-align: center;
-                                font-family: Arial, sans-serif;
-                            }
-                            h1 { color: #34495e; }
-                            .info { margin: 20px 0; font-size: 14px; }
-                            img { max-width: 100%; height: auto; }
-                        </style>
-                    </head>
-                    <body>
-                        <h1>Grafik Kunjungan Pasien</h1>
-                        <div class="info">
-                            <p>Tahun: {{ $tahun }}</p>
-                            @if (request('ruangan'))<p>Ruangan: {{ request('ruangan') }}</p>@endif
-                            <p>Dicetak pada: ${new Date().toLocaleDateString('id-ID')}</p>
-                        </div>
-                        <img src="${dataURL}" alt="Grafik Kunjungan Pasien">
-                    </body>
-                    </html>
-                `);
-            printWindow.document.close();
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{{ route("grafik.kunjungan.print") }}'; // Pastikan route ini ada
+            form.target = '_blank';
 
-            setTimeout(() => {
-                printWindow.print();
-                printWindow.close();
-            }, 100);
+            const params = {
+                _token: '{{ csrf_token() }}',
+                ruangan: document.getElementById('ruangan').value || 'Semua Ruangan',
+                tahun: '{{ $tahun }}',
+                chartImage: dataURL,
+                labels: @json($dataKunjungan['labels']),
+                baru: @json($dataKunjungan['pasien_baru']),
+                lama: @json($dataKunjungan['pasien_lama']),
+                laki: @json($dataKunjungan['laki_laki']),
+                perempuan: @json($dataKunjungan['perempuan'])
+            };
+
+            for (const key in params) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = key;
+                input.value = typeof params[key] === 'object' ? JSON.stringify(params[key]) : params[key];
+                form.appendChild(input);
+            }
+
+            document.body.appendChild(form);
+            form.submit();
+            document.body.removeChild(form);
         }
+
     </script>
 @endpush

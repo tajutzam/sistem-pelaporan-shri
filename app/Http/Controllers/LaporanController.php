@@ -121,9 +121,7 @@ class LaporanController extends Controller
             }
 
             $ruanganDisplay = $ruanganAwal->nama_ruangan;
-            if ($pindah && !$keluar) {
-                $ruanganDisplay .= " (Pindah ke {$pindah->ruangan->nama_ruangan})";
-            }
+            
             if ($keluar) {
                 $ruanganDisplay = $ruanganAkhir->nama_ruangan;
             }
@@ -510,85 +508,101 @@ class LaporanController extends Controller
     }
     private function getLaporanIndikator($startDate, $endDate, $ruanganId = null)
     {
-        $startDate = Carbon::parse($startDate)->startOfDay();
-        $endDate = Carbon::parse($endDate)->endOfDay();
+        // 1. Parsing tanggal dan standarisasi ke awal/akhir hari
+        $dtStart = \Carbon\Carbon::parse($startDate)->startOfDay();
+        $dtEnd = \Carbon\Carbon::parse($endDate)->endOfDay();
 
-        if ($endDate->greaterThan(Carbon::today()->endOfDay())) {
-            $endDate = Carbon::today()->endOfDay();
+        // Proteksi agar tidak menarik data masa depan
+        if ($dtEnd->greaterThan(\Carbon\Carbon::today()->endOfDay())) {
+            $dtEnd = \Carbon\Carbon::today()->endOfDay();
         }
 
-        // Selisih hari (t) untuk rumus BOR/TOI
-        $jumlahPeriode = $startDate->diffInDays($endDate) + 1; // Ditambah 1 agar inklusif
+        // HITUNG PERIODE (t): Pastikan inklusif menggunakan startOfDay pada keduanya
+        // Contoh: 01 Jan s/d 01 Jan harus terhitung 1 hari.
+        $jumlahPeriode = $dtStart->diffInDays($dtEnd->copy()->startOfDay()) + 1;
 
-        // 1. Agregasi Ruangan berdasarkan Nama Ruangan (Menghilangkan dobel kelas)
-        $ruangans = DB::table('ruangans')
-            ->select('nama_ruangan', DB::raw('SUM(jumlah_tempat_tidur) as total_tt'))
+        // 2. Ambil daftar ruangan (Group by Nama Ruangan untuk menggabung bed per kelas)
+        $ruangans = \DB::table('ruangans')
+            ->select('nama_ruangan', \DB::raw('SUM(jumlah_tempat_tidur) as total_tt'))
             ->when($ruanganId, function ($q) use ($ruanganId) {
-                // Jika ada filter ID, kita ambil namanya dulu agar grouping tetap konsisten
-                $name = DB::table('ruangans')->where('id', $ruanganId)->value('nama_ruangan');
+                $name = \DB::table('ruangans')->where('id', $ruanganId)->value('nama_ruangan');
                 $q->where('nama_ruangan', $name);
             })
             ->groupBy('nama_ruangan')
             ->get();
 
-        $results = $ruangans->map(function ($ruangan) use ($startDate, $endDate, $jumlahPeriode) {
+        $results = $ruangans->map(function ($ruangan) use ($dtStart, $dtEnd, $jumlahPeriode) {
             $jumlahTempatTidur = $ruangan->total_tt;
+            $endDateString = $dtEnd->format('Y-m-d');
 
-            // 2. Ambil data transaksi SHRI yang tergabung dalam Nama Ruangan tersebut
-            $shri = DB::table('shris as s')
+            // 3. Query Data SHRI (Sensus Harian Rawat Inap)
+            $stats = \DB::table('shris as s')
                 ->join('ruangans as r', 's.kelas_perawatan_id', '=', 'r.id')
                 ->leftJoin('shri_keluar as sk', 's.id', '=', 'sk.shri_id')
                 ->leftJoin('shri_pindah as sp', 's.id', '=', 'sp.shri_id')
                 ->where('r.nama_ruangan', $ruangan->nama_ruangan)
-                // Filter periode sensus/transaksi
-                ->where(function ($q) use ($startDate, $endDate) {
-                    $q->whereBetween('s.tanggal_masuk', [$startDate, $endDate])
-                        ->orWhere('s.tanggal_masuk', '<=', $endDate);
-                });
+                ->where(function ($q) use ($dtStart, $dtEnd) {
+                    // Pasien yang masuk di periode tersebut ATAU sudah masuk sebelum periode berakhir
+                    $q->whereBetween('s.tanggal_masuk', [$dtStart, $dtEnd])
+                        ->orWhere('s.tanggal_masuk', '<=', $dtEnd);
+                })
+                ->select([
+                    // Hari Perawatan (HP): Total hari penggunaan bed oleh semua pasien dalam periode t
+                    \DB::raw('COALESCE(SUM(
+                    CASE
+                        WHEN s.status = "keluar" AND sk.tanggal_keluar IS NOT NULL 
+                            THEN DATEDIFF(sk.tanggal_keluar, s.tanggal_masuk) + 1
+                        WHEN s.status = "pindah" AND sp.tanggal_pindah IS NOT NULL 
+                            THEN DATEDIFF(sp.tanggal_pindah, s.tanggal_masuk) + 1
+                        WHEN s.status = "masuk" 
+                            THEN DATEDIFF("' . $endDateString . '", s.tanggal_masuk) + 1
+                        ELSE 0
+                    END
+                ), 0) as total_hp'),
 
-            $stats = $shri->select([
-                // Jumlah Hari Perawatan (HP) - Diambil dari total harian rekap
-                DB::raw('COALESCE(SUM(
-                CASE
-                    WHEN s.status = "keluar" AND sk.tanggal_keluar IS NOT NULL 
-                        THEN DATEDIFF(sk.tanggal_keluar, s.tanggal_masuk) + 1
-                    WHEN s.status = "pindah" AND sp.tanggal_pindah IS NOT NULL 
-                        THEN DATEDIFF(sp.tanggal_pindah, s.tanggal_masuk) + 1
-                    WHEN s.status = "masuk" 
-                        THEN DATEDIFF("' . $endDate->format('Y-m-d') . '", s.tanggal_masuk) + 1
-                    ELSE 0
-                END
-            ), 0) as total_hp'),
+                    // Lama Dirawat (LD): Total hari menginap khusus untuk pasien yang sudah keluar (hidup/mati)
+                    \DB::raw('COALESCE(SUM(
+                    CASE
+                        WHEN s.status = "keluar" AND sk.tanggal_keluar IS NOT NULL
+                            THEN CAST(REPLACE(sk.lama_dirawat, " hari", "") AS UNSIGNED)
+                        ELSE 0
+                    END
+                ), 0) as total_ld'),
 
-                // Lama Dirawat (LD) - Hanya untuk pasien keluar
-                DB::raw('COALESCE(SUM(
-                CASE
-                    WHEN s.status = "keluar" AND sk.tanggal_keluar IS NOT NULL
-                        THEN CAST(REPLACE(sk.lama_dirawat, " hari", "") AS UNSIGNED)
-                    ELSE 0
-                END
-            ), 0) as total_ld'),
+                    // Agregasi Pasien Keluar
+                    \DB::raw('COUNT(CASE WHEN s.status = "keluar" THEN 1 END) as total_keluar'),
+                    \DB::raw('COUNT(CASE WHEN s.status = "keluar" AND sk.cara_keluar NOT LIKE "Mati%" THEN 1 END) as keluar_hidup'),
+                    \DB::raw('COUNT(CASE WHEN s.status = "keluar" AND sk.cara_keluar = "Mati ≥ 48 Jam" THEN 1 END) as mati_lebih_48'),
+                    \DB::raw('COUNT(CASE WHEN s.status = "keluar" AND sk.cara_keluar = "Mati ≤ 48 Jam" THEN 1 END) as mati_kurang_48'),
+                ])->first();
 
-                // Pasien Keluar (Hidup + Mati)
-                DB::raw('COUNT(CASE WHEN s.status = "keluar" THEN 1 END) as total_keluar'),
-                DB::raw('COUNT(CASE WHEN s.status = "keluar" AND sk.cara_keluar NOT LIKE "Mati%" THEN 1 END) as keluar_hidup'),
-                DB::raw('COUNT(CASE WHEN s.status = "keluar" AND sk.cara_keluar = "Mati ≥ 48 Jam" THEN 1 END) as mati_lebih_48'),
-                DB::raw('COUNT(CASE WHEN s.status = "keluar" AND sk.cara_keluar = "Mati ≤ 48 Jam" THEN 1 END) as mati_kurang_48'),
-            ])->first();
+            // 4. Inisialisasi Variabel Perhitungan
+            $hp = (float) $stats->total_hp;
+            $ld = (float) $stats->total_ld;
+            $keluar = (int) $stats->total_keluar;
+            $mati48Plus = (int) $stats->mati_lebih_48;
+            $matiTotal = $mati48Plus + (int) $stats->mati_kurang_48;
 
-            $hp = $stats->total_hp;
-            $ld = $stats->total_ld;
-            $keluar = $stats->total_keluar;
-            $mati48Plus = $stats->mati_lebih_48;
-            $matiTotal = $stats->mati_lebih_48 + $stats->mati_kurang_48;
+            // 5. Rumus Indikator Pelayanan (Standar Depkes/Barber-Johnson)
 
-            // 3. Perhitungan Indikator Standar Barber Johnson / Depkes
-            $bor = ($jumlahTempatTidur * $jumlahPeriode) > 0 ? ($hp / ($jumlahTempatTidur * $jumlahPeriode)) * 100 : 0;
+            // BOR (Bed Occupancy Ratio): (HP / (TT * t)) * 100
+            $bor = ($jumlahTempatTidur * $jumlahPeriode) > 0
+                ? ($hp / ($jumlahTempatTidur * $jumlahPeriode)) * 100 : 0;
+
+            // AVLOS (Average Length of Stay): LD / Keluar (Hidup + Mati)
             $avlos = $keluar > 0 ? $ld / $keluar : 0;
+
+            // BTO (Bed Turn Over): Keluar (Hidup + Mati) / TT
             $bto = $jumlahTempatTidur > 0 ? $keluar / $jumlahTempatTidur : 0;
+
+            // TOI (Turn Over Interval): ((TT * t) - HP) / Keluar (Hidup + Mati)
             $toi = $keluar > 0 ? (($jumlahTempatTidur * $jumlahPeriode) - $hp) / $keluar : 0;
-            $gdr = $keluar > 0 ? ($matiTotal / $keluar) * 1000 : 0; // GDR per 1000
-            $ndr = $keluar > 0 ? ($mati48Plus / $keluar) * 1000 : 0; // NDR per 1000
+
+            // GDR (Gross Death Rate): (Mati Total / Keluar) * 1000
+            $gdr = $keluar > 0 ? ($matiTotal / $keluar) * 1000 : 0;
+
+            // NDR (Net Death Rate): (Mati >= 48 Jam / Keluar) * 1000
+            $ndr = $keluar > 0 ? ($mati48Plus / $keluar) * 1000 : 0;
 
             return [
                 'nama_ruangan' => $ruangan->nama_ruangan,
@@ -611,8 +625,8 @@ class LaporanController extends Controller
         return [
             'data' => $results,
             'periode' => [
-                'start_date' => $startDate->toDateString(),
-                'end_date' => $endDate->toDateString(),
+                'start_date' => $dtStart->toDateString(),
+                'end_date' => $dtEnd->toDateString(),
                 'jumlah_hari' => $jumlahPeriode,
             ]
         ];
@@ -738,10 +752,16 @@ class LaporanController extends Controller
 
         $data = $this->getLaporanIndikator($startDate, $endDate, $ruanganId);
 
+        $ruanganNama = '-';
+        if ($ruanganId) {
+            $ruanganNama = Ruangan::findOrFail($ruanganId)->name;
+        }
+
         $pdf = Pdf::loadView('pages.laporan.indikator-pdf', [
             'data' => $data,
             'start_date' => $startDate,
-            'end_date' => $endDate
+            'end_date' => $endDate,
+            'nama_ruangan' => $ruanganNama
         ]);
 
         $pdf->setPaper('A4', 'landscape');

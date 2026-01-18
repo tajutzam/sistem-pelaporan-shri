@@ -123,7 +123,7 @@
                             <td class="px-4 py-2 border">{{ $shri->pasien->nama_pasien ?? '-' }}</td>
                             <td class="px-4 py-2 border">{{ $shri->pasien->tanggal_lahir ?? '-' }}</td>
                             <td class="px-4 py-2 border">{{ $shri->pasien->jenis_kelamin ?? '-' }}</td>
-                            <td class="px-4 py-2 border">{{ $shri->pasien->status_pasien ?? '-' }}</td>
+                            <td class="px-4 py-2 border">{{ $shri->status_pasien ?? '-' }}</td>
                             <td class="px-4 py-2 border">{{ $shri->kelasPerawatan->nama_ruangan ?? '-' }}</td>
                             <td class="px-4 py-2 border">{{ $shri->kelasPerawatan->kelas->name ?? '-' }}</td>
                             <td class="px-4 py-2 border">{{ $shri->jenisPenjaminan->jenis_penjaminan ?? '-' }}</td>
