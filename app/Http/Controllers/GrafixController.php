@@ -66,7 +66,7 @@ class GrafixController extends Controller
             $bulan = Carbon::parse($data->tanggal_masuk)->month;
             $totalKunjungan[$bulan]++;
 
-            $statusPasien = strtoupper($data->pasien->status_pasien ?? 'BARU');
+            $statusPasien = strtoupper($data->status_pasien ?? 'BARU');
             if ($statusPasien === 'BARU') {
                 $pasienBaru[$bulan]++;
             } else {

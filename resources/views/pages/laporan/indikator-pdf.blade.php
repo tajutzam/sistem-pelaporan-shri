@@ -146,8 +146,8 @@
             </tr>
             <tr>
                 <th>Hidup</th>
-                <th>Mati &ge; 48 Jam</th>
-                <th>Mati &le; 48 Jam</th>
+                <th>Mati &gt; 48 Jam</th>
+                <th>Mati &lt; 48 Jam</th>
             </tr>
         </thead>
         <tbody>

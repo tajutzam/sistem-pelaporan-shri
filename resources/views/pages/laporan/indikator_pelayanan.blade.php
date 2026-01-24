@@ -77,59 +77,110 @@
                 </div>
             @endif
 
-            <table class="min-w-full border border-gray-300 text-sm text-left">
+
+            @php
+                $totalTempatTidur = 0;
+                $totalJumlahPeriode = 0;
+                $totalLamaDirawat = 0;
+                $totalHariPerawatan = 0;
+
+                $totalKeluarHidup = 0;
+                $totalMati48Plus = 0;
+                $totalMati48Minus = 0;
+
+                $totalBor = 0;
+                $totalAvlos = 0;
+                $totalBto = 0;
+                $totalToi = 0;
+                $totalGdr = 0;
+                $totalNdr = 0;
+
+                $rowCount = count($data['data']);
+            @endphp
+
+            <table class="min-w-full border text-sm">
                 <thead class="bg-gray-100">
                     <tr>
-                        <th class="px-4 py-2 border" rowspan="2">Ruangan</th>
-                        <th class="px-4 py-2 border" rowspan="2">Jumlah tempat tidur</th>
-                        <th class="px-4 py-2 border" rowspan="2">Jumlah Periode</th>
-                        <th class="px-4 py-2 border" rowspan="2">Lama dirawat</th>
-                        <th class="px-4 py-2 border" rowspan="2">Hari perawatan</th>
-                        <th class="px-4 py-2 border text-center" colspan="3">Pasien Keluar</th>
-                        <th class="px-4 py-2 border" rowspan="2">BOR</th>
-                        <th class="px-4 py-2 border" rowspan="2">AVLos</th>
-                        <th class="px-4 py-2 border" rowspan="2">BTO</th>
-                        <th class="px-4 py-2 border" rowspan="2">TOI</th>
-                        <th class="px-4 py-2 border" rowspan="2">GDR</th>
-                        <th class="px-4 py-2 border" rowspan="2">NDR</th>
+                        <th rowspan="2" class="border px-3 py-2">Ruangan</th>
+                        <th rowspan="2" class="border px-3 py-2">TT</th>
+                        <th rowspan="2" class="border px-3 py-2">Periode</th>
+                        <th rowspan="2" class="border px-3 py-2">Lama Dirawat</th>
+                        <th rowspan="2" class="border px-3 py-2">Hari Perawatan</th>
+                        <th colspan="3" class="border px-3 py-2 text-center">Pasien Keluar</th>
+                        <th rowspan="2" class="border px-3 py-2">BOR</th>
+                        <th rowspan="2" class="border px-3 py-2">AVLOS</th>
+                        <th rowspan="2" class="border px-3 py-2">BTO</th>
+                        <th rowspan="2" class="border px-3 py-2">TOI</th>
+                        <th rowspan="2" class="border px-3 py-2">GDR</th>
+                        <th rowspan="2" class="border px-3 py-2">NDR</th>
                     </tr>
                     <tr>
-                        <th class="px-4 py-2 border">Hidup</th>
-                        <th class="px-4 py-2 border">Mati ≥ 48 jam</th>
-                        <th class="px-4 py-2 border">Mati ≤ 48 jam</th>
+                        <th class="border px-3 py-2">Hidup</th>
+                        <th class="border px-3 py-2">≥ 48 Jam</th>
+                        <th class="border px-3 py-2">≤ 48 Jam</th>
                     </tr>
                 </thead>
+
                 <tbody>
                     @forelse ($data['data'] as $row)
+                        @php
+                            $totalTempatTidur += $row['jumlah_tempat_tidur'];
+                            $totalJumlahPeriode += $row['jumlah_periode'];
+                            $totalLamaDirawat += $row['total_lama_dirawat'];
+                            $totalHariPerawatan += $row['jumlah_hari_perawatan'];
+
+                            $totalKeluarHidup += $row['pasien_keluar_hidup'];
+                            $totalMati48Plus += $row['pasien_keluar_mati_48_plus'];
+                            $totalMati48Minus += $row['pasien_keluar_mati_48_minus'];
+
+                            $totalBor += $row['bor'];
+                            $totalAvlos += $row['avlos'];
+                            $totalBto += $row['bto'];
+                            $totalToi += $row['toi'];
+                            $totalGdr += $row['gdr'];
+                            $totalNdr += $row['ndr'];
+                        @endphp
+
                         <tr>
-                            <td class="px-4 py-2 border">{{ $row['nama_ruangan'] }}</td>
-                            <td class="px-4 py-2 border text-center">{{ $row['jumlah_tempat_tidur'] }}</td>
-                            <td class="px-4 py-2 border text-center">{{ number_format($row['jumlah_periode'], 0) }}</td>
-                            <td class="px-4 py-2 border text-center">{{ $row['total_lama_dirawat'] }}</td>
-                            <td class="px-4 py-2 border text-center">{{ $row['jumlah_hari_perawatan'] }}</td>
+                            <td class="border px-3 py-2">{{ $row['nama_ruangan'] }}</td>
+                            <td class="border px-3 py-2 text-center">{{ $row['jumlah_tempat_tidur'] }}</td>
+                            <td class="border px-3 py-2 text-center">{{ $row['jumlah_periode'] }}</td>
+                            <td class="border px-3 py-2 text-center">{{ $row['total_lama_dirawat'] }}</td>
+                            <td class="border px-3 py-2 text-center">{{ $row['jumlah_hari_perawatan'] }}</td>
 
-                            <td class="px-4 py-2 border text-center">{{ $row['pasien_keluar_hidup'] }}</td>
-                            <td class="px-4 py-2 border text-center">
-                                {{ $row['pasien_keluar_mati_48_plus'] > 0 ? $row['pasien_keluar_mati_48_plus'] : '-' }}
-                            </td>
-                            <td class="px-4 py-2 border text-center">
-                                {{ $row['pasien_keluar_mati_48_minus'] > 0 ? $row['pasien_keluar_mati_48_minus'] : '-' }}
-                            </td>
+                            <td class="border px-3 py-2 text-center">{{ $row['pasien_keluar_hidup'] }}</td>
+                            <td class="border px-3 py-2 text-center">{{ $row['pasien_keluar_mati_48_plus'] ?: '0' }}</td>
+                            <td class="border px-3 py-2 text-center">{{ $row['pasien_keluar_mati_48_minus'] ?: '0' }}</td>
 
-                            <td class="px-4 py-2 border text-center">{{ number_format($row['bor'], 2) }}</td>
-                            <td class="px-4 py-2 border text-center">{{ number_format($row['avlos'], 2) }}</td>
-                            <td class="px-4 py-2 border text-center">{{ number_format($row['bto'], 2) }}</td>
-                            <td class="px-4 py-2 border text-center">{{ number_format($row['toi'], 2) }}</td>
-                            <td class="px-4 py-2 border text-center">{{ number_format($row['gdr'], 2) }}</td>
-                            <td class="px-4 py-2 border text-center">{{ number_format($row['ndr'], 2) }}</td>
+                            <td class="border px-3 py-2 text-center">{{ number_format($row['bor'], 2) }}</td>
+                            <td class="border px-3 py-2 text-center">{{ number_format($row['avlos'], 2) }}</td>
+                            <td class="border px-3 py-2 text-center">{{ number_format($row['bto'], 2) }}</td>
+                            <td class="border px-3 py-2 text-center">{{ number_format($row['toi'], 2) }}</td>
+                            <td class="border px-3 py-2 text-center">{{ number_format($row['gdr'], 2) }}</td>
+                            <td class="border px-3 py-2 text-center">{{ number_format($row['ndr'], 2) }}</td>
                         </tr>
+
                     @empty
                         <tr>
-                            <td colspan="15" class="px-4 py-4 border text-center text-gray-500">
-                                Tidak ada data untuk ditampilkan.
+                            <td colspan="15" class="border text-center py-4 text-gray-500">
+                                Tidak ada data
                             </td>
                         </tr>
                     @endforelse
+
+                    @if ($rowCount > 0)
+                        <tr class="bg-gray-200 font-semibold">
+                            <td class="border px-3 py-2 text-center">TOTAL</td>
+                            <td class="border px-3 py-2 text-center">{{ $totalTempatTidur }}</td>
+                            <td class="border px-3 py-2 text-center"></td>
+                            <td class="border px-3 py-2 text-center">{{ $totalLamaDirawat }}</td>
+                            <td class="border px-3 py-2 text-center">{{ $totalHariPerawatan }}</td>
+                            <td class="border px-3 py-2 text-center">{{ $totalKeluarHidup }}</td>
+                            <td class="border px-3 py-2 text-center">{{ $totalMati48Plus ?: '0' }}</td>
+                            <td class="border px-3 py-2 text-center">{{ $totalMati48Minus ?: '0' }}</td>
+                        </tr>
+                    @endif
+
                 </tbody>
             </table>
 
@@ -151,19 +202,18 @@
 
             {{-- Tombol Cetak Laporan (Seragam: Hijau, Kanan Bawah) --}}
             <a href="{{ route('laporan-indikator.preview-pdf', [
-                'start_date' =>
-                    request('year', date('Y')) .
-                    '-' .
-                    (request('month') ? str_pad(request('month'), 2, '0', STR_PAD_LEFT) : '01') .
-                    '-01',
-                'end_date' =>
-                    request('year', date('Y')) .
-                    '-' .
-                    (request('month') ? str_pad(request('month'), 2, '0', STR_PAD_LEFT) : '12') .
-                    '-31',
-                'ruangan_id' => request('ruangan_id'),
-            ]) }}"
-                target="_blank"
+        'start_date' =>
+            request('year', date('Y')) .
+            '-' .
+            (request('month') ? str_pad(request('month'), 2, '0', STR_PAD_LEFT) : '01') .
+            '-01',
+        'end_date' =>
+            request('year', date('Y')) .
+            '-' .
+            (request('month') ? str_pad(request('month'), 2, '0', STR_PAD_LEFT) : '12') .
+            '-31',
+        'ruangan_id' => request('ruangan_id'),
+    ]) }}" target="_blank"
                 class="bg-green-600 text-white px-5 py-2.5 rounded-lg hover:bg-green-700 transition font-medium inline-flex items-center gap-2">
                 <i class="fas fa-print"></i>
                 Cetak Laporan

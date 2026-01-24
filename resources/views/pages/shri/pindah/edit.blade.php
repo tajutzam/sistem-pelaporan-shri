@@ -20,7 +20,7 @@
                 <div>
                     <label>Tanggal Pindah</label>
                     <input type="date" name="tanggal_pindah" class="w-full p-2 rounded border" id="tanggalPindah"
-                        value="{{ $pindah->tanggal_pindah }}" max="{{ $pindah->tanggal_pindah }}">
+                        value="{{ $pindah->tanggal_pindah }}" max="{{ now()->toDateString() }}">
                 </div>
 
                 <div>

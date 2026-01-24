@@ -157,7 +157,20 @@
                 @endforelse
             </tbody>
         </table>
-        <div class="flex justify-end mt-4">
+        <div class="flex justify-end mt-4 gap-4">
+
+            @if (auth()->user()->hak_akses == 'kepala')
+                <form method="post" action="{{ route('laporan.verifikasi') }}">
+                    <input type="hidden" name="jenis_laporan" value="penyakit">
+                    @csrf
+                    <button type="submit"
+                        class="bg-gray-600 text-white px-5 py-2.5 rounded-lg hover:bg-gray-700 transition font-medium inline-flex items-center gap-2">
+                        <i class="fas fa-check"></i>
+                        VERIFIKASI
+                    </button>
+                </form>
+            @endif
+
             <a href="{{ route('laporan-10-penyakit.cetak', request()->all()) }}" target="_blank"
                 class="bg-green-600 text-white rounded-md px-6 py-2.5 text-sm font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors duration-200 flex items-center shadow-md">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

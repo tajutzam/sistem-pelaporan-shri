@@ -189,17 +189,7 @@
 
         <div class="flex justify-end gap-2">
 
-            @if (auth()->user()->hak_akses == 'kepala')
-                <form method="post" action="{{ route('laporan.verifikasi') }}">
-                    <input type="hidden" name="jenis_laporan" value="kunjungan">
-                    @csrf
-                    <button type="submit"
-                        class="bg-gray-600 text-white px-5 py-2.5 rounded-lg hover:bg-gray-700 transition font-medium inline-flex items-center gap-2">
-                        <i class="fas fa-check"></i>
-                        VERIFIKASI
-                    </button>
-                </form>
-            @endif
+         
 
             <form method="GET" action="{{ route('laporan.kunjungan.cetak') }}" target="_blank">
 

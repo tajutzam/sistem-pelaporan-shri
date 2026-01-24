@@ -45,7 +45,7 @@ class LaporanController extends Controller
             'tanggal_akhir' => $request->tanggal_akhir,
             'ruangan_filter' => $request->ruangan,
             'title' => 'Laporan Kunjungan rawat inap',
-            'date' => Carbon::now()
+            'date' => Carbon::now(),
         ]);
 
         $pdf->setPaper('a4', 'landscape');
@@ -121,7 +121,7 @@ class LaporanController extends Controller
             }
 
             $ruanganDisplay = $ruanganAwal->nama_ruangan;
-            
+
             if ($keluar) {
                 $ruanganDisplay = $ruanganAkhir->nama_ruangan;
             }
@@ -416,6 +416,14 @@ class LaporanController extends Controller
 
     public function cetakTenDiagnosaPenyakit(Request $request)
     {
+
+        $today = Carbon::today();
+        $approved = ApprovedDay::whereDate('created_at', $today)->where('jenis_laporan', 'penyakit')->first();
+
+        if (!$approved) {
+            return back()->withErrors('Silahkan menunggu kepala rumah sakit untuk memverifikasi');
+        }
+
         $ruanganNama = $request->input('ruangan');
         $tahun = $request->input('tahun', now()->year);
         $periode = $request->input('periode', 'semua');

@@ -49,7 +49,7 @@
                     <label for="tanggal_masuk" class="block font-medium">Tanggal Masuk</label>
                     <input type="date" name="tanggal_masuk" id="tanggal_masuk"
                         class="w-full border border-gray-300 rounded px-4 py-2" value="{{ $shri->tanggal_masuk }}"
-                        max="{{ $shri->tanggal_masuk }}" />
+                        max="{{ now()->toDateString() }}" />
                 </div>
 
                 <div>

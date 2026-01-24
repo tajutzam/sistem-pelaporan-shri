@@ -166,7 +166,7 @@
             <table style="border: none">
                 <tr style="border:none">
                     <td style="border:none; width:100px; padding:2px">Ruangan</td>
-                    <td style="border:none; padding:2px">: {{ $filter['ruangan'] ?? 'Semua Ruangan' }}</td>
+                    <td style="border:none; padding:2px">: {{ request()->get('ruangan') ?? 'Semua Ruangan' }}</td>
                 </tr>
                 <tr style="border:none">
                     <td style="border:none; padding:2px">Periode Laporan</td>
