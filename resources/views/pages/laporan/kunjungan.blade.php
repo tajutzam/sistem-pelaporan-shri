@@ -138,7 +138,7 @@
                                 {{ $item['jenis_kelamin'] }}
                             </td>
                             <td class="px-4 py-2 border">
-                                {{ $item['ruangan'] }}
+                                {!! $item['ruangan'] !!}
                             </td>
                             <td class="px-4 py-2 border">
                                 {{ $item['kelas'] }}

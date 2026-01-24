@@ -214,7 +214,7 @@
                     <td style="text-align:center;">{{ $item['no_rm'] }}</td>
                     <td>{{ $item['nama_pasien'] }}</td>
                     <td>{{ $item['jenis_kelamin'] }}</td>
-                    <td>{{ $item['ruangan'] }}</td>
+                    <td>{!! $item['ruangan'] !!}</td>
                     <td style="text-align:center;">{{ $item['kelas'] }}</td>
                     <td>{{ $item['penjaminan'] }}</td>
                     <td>{{ $item['dpjp'] }}</td>

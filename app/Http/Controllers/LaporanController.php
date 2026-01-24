@@ -99,11 +99,14 @@ class LaporanController extends Controller
         }
 
         $result = $query->get()->map(function ($item) {
+
             $ruanganAwal = $item->kelasPerawatan;
             $pindah = $item->pindah;
             $keluar = $item->shriKeluar;
 
-            $ruanganAkhir = $pindah && $pindah->ruangan ? $pindah->ruangan : $ruanganAwal;
+            $ruanganAkhir = $pindah && $pindah->ruangan
+                ? $pindah->ruangan
+                : $ruanganAwal;
 
             $status = "dirawat";
             $tanggalKeluar = null;
@@ -114,23 +117,44 @@ class LaporanController extends Controller
                 $status = "pindah";
                 $tanggalPindah = $pindah->tanggal_pindah;
             }
+
             if ($keluar) {
                 $status = "keluar";
                 $tanggalKeluar = $keluar->tanggal_keluar;
                 $diagnosa = $keluar->diagnosa->diagnosa ?? "-";
             }
 
-            $ruanganDisplay = $ruanganAwal->nama_ruangan;
+            /**
+             * ===============================
+             * RUANGAN DISPLAY (HTML READY)
+             * ===============================
+             */
+            if ($status === 'pindah' && $pindah && $pindah->ruangan) {
 
-            if ($keluar) {
-                $ruanganDisplay = $ruanganAkhir->nama_ruangan;
+                $ruanganDisplay =
+                    '<span style="color:#1e40af;font-weight:bold">' .
+                    e($ruanganAwal->nama_ruangan) .
+                    '</span>' .
+                    ' dipindah ke  ' .
+                    '<span style="color:#b91c1c;font-weight:bold">' .
+                    e($pindah->ruangan->nama_ruangan) .
+                    '</span>';
+
+            } elseif ($status === 'keluar') {
+
+                $ruanganDisplay = e($ruanganAkhir->nama_ruangan);
+
+            } else {
+
+                $ruanganDisplay = e($ruanganAwal->nama_ruangan);
+
             }
 
             return [
                 'no_rm' => $item->pasien->no_rekam_medis,
                 'nama_pasien' => $item->pasien->nama_pasien,
                 'jenis_kelamin' => $item->pasien->jenis_kelamin,
-                'ruangan' => $ruanganDisplay,
+                'ruangan' => $ruanganDisplay, // HTML string
                 'kelas' => $ruanganAkhir->kelas->name ?? '-',
                 'penjaminan' => $item->jenisPenjaminan->jenis_penjaminan ?? '-',
                 'dpjp' => $item->dpjp->nama_lengkap ?? '-',
@@ -143,6 +167,8 @@ class LaporanController extends Controller
                 'asal_pasien' => $item->asal_pasien
             ];
         });
+
+
 
         $laporanKunjungans = $result->sortByDesc(fn($i) => $i['tanggal_keluar'] ?? $i['tanggal_masuk'])->values();
 
