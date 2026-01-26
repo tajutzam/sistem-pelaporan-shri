@@ -133,13 +133,10 @@
                             $totalMati48Plus += $row['pasien_keluar_mati_48_plus'];
                             $totalMati48Minus += $row['pasien_keluar_mati_48_minus'];
 
-                            $totalBor += $row['bor'];
-                            $totalAvlos += $row['avlos'];
-                            $totalBto += $row['bto'];
-                            $totalToi += $row['toi'];
-                            $totalGdr += $row['gdr'];
-                            $totalNdr += $row['ndr'];
                         @endphp
+
+
+
 
                         <tr>
                             <td class="border px-3 py-2">{{ $row['nama_ruangan'] }}</td>
@@ -169,15 +166,46 @@
                     @endforelse
 
                     @if ($rowCount > 0)
-                        <tr class="bg-gray-200 font-semibold">
+
+                        @php
+
+                            // Hitung Total Keluar (Hidup + Mati) untuk pembagi rumus
+                            $totalKeluar = $totalKeluarHidup + $totalMati48Plus + $totalMati48Minus;
+                            $totalMatiSemua = $totalMati48Plus + $totalMati48Minus;
+
+                            // Perhitungan Rumus Agregat
+                            $totalBorAgregat = ($totalTempatTidur * $data['periode']['jumlah_hari']) > 0
+                                ? ($totalHariPerawatan / ($totalTempatTidur * $data['periode']['jumlah_hari'])) * 100 : 0;
+
+                            $totalAvlosAgregat = $totalKeluar > 0 ? $totalLamaDirawat / $totalKeluar : 0;
+
+                            $totalBtoAgregat = $totalTempatTidur > 0 ? $totalKeluar / $totalTempatTidur : 0;
+
+                            $totalToiAgregat = $totalKeluar > 0
+                                ? (($totalTempatTidur * $data['periode']['jumlah_hari']) - $totalHariPerawatan) / $totalKeluar : 0;
+
+                            $totalGdrAgregat = $totalKeluar > 0 ? ($totalMatiSemua / $totalKeluar) * 1000 : 0;
+
+                            $totalNdrAgregat = $totalKeluar > 0 ? ($totalMati48Plus / $totalKeluar) * 1000 : 0;
+                        @endphp
+
+
+                        <tr class="bg-gray-200 font-bold">
                             <td class="border px-3 py-2 text-center">TOTAL</td>
                             <td class="border px-3 py-2 text-center">{{ $totalTempatTidur }}</td>
-                            <td class="border px-3 py-2 text-center"></td>
+                            <td class="border px-3 py-2 text-center">{{ $data['periode']['jumlah_hari'] }}</td>
                             <td class="border px-3 py-2 text-center">{{ $totalLamaDirawat }}</td>
                             <td class="border px-3 py-2 text-center">{{ $totalHariPerawatan }}</td>
                             <td class="border px-3 py-2 text-center">{{ $totalKeluarHidup }}</td>
-                            <td class="border px-3 py-2 text-center">{{ $totalMati48Plus ?: '0' }}</td>
-                            <td class="border px-3 py-2 text-center">{{ $totalMati48Minus ?: '0' }}</td>
+                            <td class="border px-3 py-2 text-center">{{ $totalMati48Plus }}</td>
+                            <td class="border px-3 py-2 text-center">{{ $totalMati48Minus }}</td>
+
+                            <td class="border px-3 py-2 text-center">{{ number_format($totalBorAgregat, 2) }}</td>
+                            <td class="border px-3 py-2 text-center">{{ number_format($totalAvlosAgregat, 2) }}</td>
+                            <td class="border px-3 py-2 text-center">{{ number_format($totalBtoAgregat, 2) }}</td>
+                            <td class="border px-3 py-2 text-center">{{ number_format($totalToiAgregat, 2) }}</td>
+                            <td class="border px-3 py-2 text-center">{{ number_format($totalGdrAgregat, 2) }}</td>
+                            <td class="border px-3 py-2 text-center">{{ number_format($totalNdrAgregat, 2) }}</td>
                         </tr>
                     @endif
 

@@ -171,16 +171,43 @@
             @endforeach
         </tbody>
         <tfoot>
-            <tr style="font-weight: bold; background-color: #f9f9f9;">
-                <td class="text-left">Total</td>
-                <td>{{ collect($data['data'])->sum('jumlah_tempat_tidur') }}</td>
-                <td></td>
-                <td>{{ collect($data['data'])->sum('total_lama_dirawat') }}</td>
-                <td>{{ collect($data['data'])->sum('jumlah_hari_perawatan') }}</td>
-                <td>{{ collect($data['data'])->sum('pasien_keluar_hidup') }}</td>
-                <td>{{ collect($data['data'])->sum('pasien_keluar_mati_48_plus') }}</td>
-                <td>{{ collect($data['data'])->sum('pasien_keluar_mati_48_minus') }}</td>
-                <td colspan="6"></td>
+            @php
+                // 1. Hitung Agregat Dasar
+                $sumTT = collect($data['data'])->sum('jumlah_tempat_tidur');
+                $sumLD = collect($data['data'])->sum('total_lama_dirawat');
+                $sumHP = collect($data['data'])->sum('jumlah_hari_perawatan');
+                $sumHidup = collect($data['data'])->sum('pasien_keluar_hidup');
+                $sumMati48P = collect($data['data'])->sum('pasien_keluar_mati_48_plus');
+                $sumMati48M = collect($data['data'])->sum('pasien_keluar_mati_48_minus');
+
+                $t = $data['periode']['jumlah_hari'];
+                $totalKeluar = $sumHidup + $sumMati48P + $sumMati48M;
+                $totalMati = $sumMati48P + $sumMati48M;
+
+                // 2. Hitung Indikator Agregat
+                $totalBor = ($sumTT * $t) > 0 ? ($sumHP / ($sumTT * $t)) * 100 : 0;
+                $totalAvlos = $totalKeluar > 0 ? $sumLD / $totalKeluar : 0;
+                $totalBto = $sumTT > 0 ? $totalKeluar / $sumTT : 0;
+                $totalToi = $totalKeluar > 0 ? (($sumTT * $t) - $sumHP) / $totalKeluar : 0;
+                $totalGdr = $totalKeluar > 0 ? ($totalMati / $totalKeluar) * 1000 : 0;
+                $totalNdr = $totalKeluar > 0 ? ($sumMati48P / $totalKeluar) * 1000 : 0;
+            @endphp
+            <tr style="font-weight: bold; background-color: #f2f2f2;">
+                <td class="text-left">TOTAL</td>
+                <td>{{ $sumTT }}</td>
+                <td>{{ $t }}</td>
+                <td>{{ $sumLD }}</td>
+                <td>{{ $sumHP }}</td>
+                <td>{{ $sumHidup }}</td>
+                <td>{{ $sumMati48P }}</td>
+                <td>{{ $sumMati48M }}</td>
+                {{-- Hasil Rumus Agregat --}}
+                <td>{{ number_format($totalBor, 2) }}</td>
+                <td>{{ number_format($totalAvlos, 2) }}</td>
+                <td>{{ number_format($totalBto, 2) }}</td>
+                <td>{{ number_format($totalToi, 2) }}</td>
+                <td>{{ number_format($totalGdr, 2) }}</td>
+                <td>{{ number_format($totalNdr, 2) }}</td>
             </tr>
         </tfoot>
     </table>
