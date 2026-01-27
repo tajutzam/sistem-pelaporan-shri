@@ -166,7 +166,6 @@
                     @endforelse
 
                     @if ($rowCount > 0)
-
                         @php
 
                             // Hitung Total Keluar (Hidup + Mati) untuk pembagi rumus
@@ -174,15 +173,21 @@
                             $totalMatiSemua = $totalMati48Plus + $totalMati48Minus;
 
                             // Perhitungan Rumus Agregat
-                            $totalBorAgregat = ($totalTempatTidur * $data['periode']['jumlah_hari']) > 0
-                                ? ($totalHariPerawatan / ($totalTempatTidur * $data['periode']['jumlah_hari'])) * 100 : 0;
+                            $totalBorAgregat =
+                                $totalTempatTidur * $data['periode']['jumlah_hari'] > 0
+                                    ? ($totalHariPerawatan / ($totalTempatTidur * $data['periode']['jumlah_hari'])) *
+                                        100
+                                    : 0;
 
                             $totalAvlosAgregat = $totalKeluar > 0 ? $totalLamaDirawat / $totalKeluar : 0;
 
                             $totalBtoAgregat = $totalTempatTidur > 0 ? $totalKeluar / $totalTempatTidur : 0;
 
-                            $totalToiAgregat = $totalKeluar > 0
-                                ? (($totalTempatTidur * $data['periode']['jumlah_hari']) - $totalHariPerawatan) / $totalKeluar : 0;
+                            $totalToiAgregat =
+                                $totalKeluar > 0
+                                    ? ($totalTempatTidur * $data['periode']['jumlah_hari'] - $totalHariPerawatan) /
+                                        $totalKeluar
+                                    : 0;
 
                             $totalGdrAgregat = $totalKeluar > 0 ? ($totalMatiSemua / $totalKeluar) * 1000 : 0;
 
@@ -228,24 +233,17 @@
                 </form>
             @endif
 
-            {{-- Tombol Cetak Laporan (Seragam: Hijau, Kanan Bawah) --}}
             <a href="{{ route('laporan-indikator.preview-pdf', [
-        'start_date' =>
-            request('year', date('Y')) .
-            '-' .
-            (request('month') ? str_pad(request('month'), 2, '0', STR_PAD_LEFT) : '01') .
-            '-01',
-        'end_date' =>
-            request('year', date('Y')) .
-            '-' .
-            (request('month') ? str_pad(request('month'), 2, '0', STR_PAD_LEFT) : '12') .
-            '-31',
-        'ruangan_id' => request('ruangan_id'),
-    ]) }}" target="_blank"
+                'year' => request('year', date('Y')),
+                'month' => request('month'),
+                'ruangan_id' => request('ruangan_id'),
+            ]) }}"
+                target="_blank"
                 class="bg-green-600 text-white px-5 py-2.5 rounded-lg hover:bg-green-700 transition font-medium inline-flex items-center gap-2">
                 <i class="fas fa-print"></i>
                 Cetak Laporan
             </a>
+
         </div>
     </div>
 @endsection

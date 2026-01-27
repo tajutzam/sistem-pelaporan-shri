@@ -105,29 +105,82 @@
         <div class="report-title">LAPORAN INDIKATOR PELAYANAN RUMAH SAKIT</div>
     </div>
 
+    <style>
+        .meta-wrapper {
+            margin-bottom: 20px;
+            font-family: Arial, sans-serif;
+            font-size: 11px;
+        }
+
+        .meta-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .meta-table td {
+            padding: 2px 0;
+            vertical-align: top;
+        }
+
+        /* Pengunci lebar label agar titik dua sejajar vertikal */
+        .label-left {
+            width: 90px;
+        }
+
+        .label-right {
+            width: 80px;
+            text-align: left;
+        }
+
+        .sep {
+            width: 8px;
+            text-align: center;
+        }
+
+        /* Kolom isi data */
+        .val-left {
+            width: 250px;
+        }
+
+        /* Atur sesuai kebutuhan panjang nama ruangan */
+        .val-right {
+            width: 110px;
+        }
+
+        /* Spacer untuk mendorong konten ke kanan */
+        .spacer {
+            width: auto;
+        }
+    </style>
+
     <div class="meta-wrapper">
         <table class="meta-table">
             <tr>
-                {{-- <td width="120">Ruangan</td>
-                <td width="400">: {{ $nama_ruangan ?? '-' }}</td> --}}
-                <td width="150">Tanggal Cetak</td>
-                <td>: {{ date('d/m/Y H:i') }}</td>
+                <td class="label-left">Periode Laporan</td>
+                <td class="sep">:</td>
+                <td class="val-left">{{ $start_date->format('d/m/Y') }} - {{ $end_date->format('d/m/Y') }}</td>
+
+                <td class="spacer"></td>
+
+                <td class="label-right">Tanggal Cetak</td>
+                <td class="sep">:</td>
+                <td class="val-right">{{ date('d/m/Y H:i') }}</td>
             </tr>
             <tr>
-                <td>Periode Laporan</td>
-                <td>: {{ $start_date->format('d/m/Y') }} - {{ $end_date->format('d/m/Y') }}</td>
-                <td>User</td>
-                <td>: {{ Auth::user()->name }}</td>
-            </tr>
-            <tr>
-                <td></td>
-                <td></td>
-                <td>Halaman</td>
-                <td>: .. dari .. </td>
+                <td class="label-left">Ruangan</td>
+                <td class="sep">:</td>
+                <td class="val-left">
+                    {{ request('ruangan_id') ? ($data['data']->first()['nama_ruangan'] ?? 'Semua Ruangan') : 'Semua Ruangan' }}
+                </td>
+
+                <td class="spacer"></td>
+
+                <td class="label-right">User</td>
+                <td class="sep">:</td>
+                <td class="val-right">{{ Auth::user()->name }}</td>
             </tr>
         </table>
     </div>
-
     <table class="main-table">
         <thead>
             <tr>
@@ -185,10 +238,10 @@
                 $totalMati = $sumMati48P + $sumMati48M;
 
                 // 2. Hitung Indikator Agregat
-                $totalBor = ($sumTT * $t) > 0 ? ($sumHP / ($sumTT * $t)) * 100 : 0;
+                $totalBor = $sumTT * $t > 0 ? ($sumHP / ($sumTT * $t)) * 100 : 0;
                 $totalAvlos = $totalKeluar > 0 ? $sumLD / $totalKeluar : 0;
                 $totalBto = $sumTT > 0 ? $totalKeluar / $sumTT : 0;
-                $totalToi = $totalKeluar > 0 ? (($sumTT * $t) - $sumHP) / $totalKeluar : 0;
+                $totalToi = $totalKeluar > 0 ? ($sumTT * $t - $sumHP) / $totalKeluar : 0;
                 $totalGdr = $totalKeluar > 0 ? ($totalMati / $totalKeluar) * 1000 : 0;
                 $totalNdr = $totalKeluar > 0 ? ($sumMati48P / $totalKeluar) * 1000 : 0;
             @endphp

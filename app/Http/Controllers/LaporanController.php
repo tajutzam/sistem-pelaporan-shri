@@ -292,7 +292,7 @@ class LaporanController extends Controller
 
         $ruangan = $request->input('ruangan');
         $tahun = $request->input('tahun', now()->year);
-        $periode = $request->input('periode');
+        $periode = $request->input('month');
 
         if (!$periode) {
             $periode = 'bulan_' . str_pad(now()->month, 2, '0', STR_PAD_LEFT);
@@ -518,44 +518,40 @@ class LaporanController extends Controller
     public function getLaporanBOR(Request $request)
     {
         $year = $request->input('year', now()->year);
-        $month = $request->input('month'); // boleh kosong (semua bulan)
+        $month = $request->input('month');
         $ruanganId = $request->input('ruangan_id');
 
-        // Tentukan rentang waktu
         if ($month) {
             $startDate = Carbon::createFromDate($year, $month, 1)->startOfDay();
             $endDate = Carbon::createFromDate($year, $month, 1)->endOfMonth()->endOfDay();
 
-            // Jika bulan berjalan, batasi sampai hari ini
             if ($endDate->greaterThan(Carbon::today()->endOfDay())) {
                 $endDate = Carbon::today()->endOfDay();
             }
         } else {
-            // Semua bulan = setahun penuh
             $startDate = Carbon::createFromDate($year, 1, 1)->startOfDay();
             $endDate = Carbon::createFromDate($year, 12, 31)->endOfDay();
         }
 
-        $data = $this->getLaporanIndikator($startDate, $endDate, $ruanganId, $month);
+        $data = $this->getLaporanIndikator(
+            $startDate,
+            $endDate,
+            $ruanganId,
+            $month
+        );
 
         return view('pages.laporan.indikator_pelayanan', compact('data', 'year', 'month'));
     }
-    private function getLaporanIndikator($startDate, $endDate, $ruanganId = null)
+
+
+    private function getLaporanIndikator($startDate, $endDate, $ruanganId = null, $month = null)
     {
         // 1. Parsing tanggal dan standarisasi ke awal/akhir hari
         $dtStart = \Carbon\Carbon::parse($startDate)->startOfDay();
         $dtEnd = \Carbon\Carbon::parse($endDate)->endOfDay();
 
-        // Proteksi agar tidak menarik data masa depan
-        if ($dtEnd->greaterThan(\Carbon\Carbon::today()->endOfDay())) {
-            $dtEnd = \Carbon\Carbon::today()->endOfDay();
-        }
-
-        // HITUNG PERIODE (t): Pastikan inklusif menggunakan startOfDay pada keduanya
-        // Contoh: 01 Jan s/d 01 Jan harus terhitung 1 hari.
         $jumlahPeriode = $dtStart->diffInDays($dtEnd->copy()->startOfDay()) + 1;
 
-        // 2. Ambil daftar ruangan (Group by Nama Ruangan untuk menggabung bed per kelas)
         $ruangans = \DB::table('ruangans')
             ->select('nama_ruangan', \DB::raw('SUM(jumlah_tempat_tidur) as total_tt'))
             ->when($ruanganId, function ($q) use ($ruanganId) {
@@ -569,19 +565,16 @@ class LaporanController extends Controller
             $jumlahTempatTidur = $ruangan->total_tt;
             $endDateString = $dtEnd->format('Y-m-d');
 
-            // 3. Query Data SHRI (Sensus Harian Rawat Inap)
             $stats = \DB::table('shris as s')
                 ->join('ruangans as r', 's.kelas_perawatan_id', '=', 'r.id')
                 ->leftJoin('shri_keluar as sk', 's.id', '=', 'sk.shri_id')
                 ->leftJoin('shri_pindah as sp', 's.id', '=', 'sp.shri_id')
                 ->where('r.nama_ruangan', $ruangan->nama_ruangan)
                 ->where(function ($q) use ($dtStart, $dtEnd) {
-                    // Pasien yang masuk di periode tersebut ATAU sudah masuk sebelum periode berakhir
                     $q->whereBetween('s.tanggal_masuk', [$dtStart, $dtEnd])
                         ->orWhere('s.tanggal_masuk', '<=', $dtEnd);
                 })
                 ->select([
-                    // Hari Perawatan (HP): Total hari penggunaan bed oleh semua pasien dalam periode t
                     \DB::raw('COALESCE(SUM(
                     CASE
                         WHEN s.status = "keluar" AND sk.tanggal_keluar IS NOT NULL 
@@ -594,48 +587,43 @@ class LaporanController extends Controller
                     END
                 ), 0) as total_hp'),
 
-                    // Lama Dirawat (LD): Total hari menginap khusus untuk pasien yang sudah keluar (hidup/mati)
                     \DB::raw('COALESCE(SUM(
-                    CASE
-                        WHEN s.status = "keluar" AND sk.tanggal_keluar IS NOT NULL
-                            THEN CAST(REPLACE(sk.lama_dirawat, " hari", "") AS UNSIGNED)
-                        ELSE 0
-                    END
-                ), 0) as total_ld'),
+                        CASE
+                            WHEN s.status = "keluar"
+                            AND sk.tanggal_keluar IS NOT NULL
+                            THEN
+                                DATEDIFF(
+                                    LEAST(sk.tanggal_keluar, "' . $dtEnd->toDateString() . '"),
+                                    GREATEST(s.tanggal_masuk, "' . $dtStart->toDateString() . '")
+                                ) + 1
+                            ELSE 0
+                        END
+                    ), 0) as total_ld'),
 
-                    // Agregasi Pasien Keluar
+
                     \DB::raw('COUNT(CASE WHEN s.status = "keluar" THEN 1 END) as total_keluar'),
                     \DB::raw('COUNT(CASE WHEN s.status = "keluar" AND sk.cara_keluar NOT LIKE "Mati%" THEN 1 END) as keluar_hidup'),
                     \DB::raw('COUNT(CASE WHEN s.status = "keluar" AND sk.cara_keluar = "Mati ≥ 48 Jam" THEN 1 END) as mati_lebih_48'),
                     \DB::raw('COUNT(CASE WHEN s.status = "keluar" AND sk.cara_keluar = "Mati ≤ 48 Jam" THEN 1 END) as mati_kurang_48'),
                 ])->first();
 
-            // 4. Inisialisasi Variabel Perhitungan
             $hp = (float) $stats->total_hp;
             $ld = (float) $stats->total_ld;
             $keluar = (int) $stats->total_keluar;
             $mati48Plus = (int) $stats->mati_lebih_48;
             $matiTotal = $mati48Plus + (int) $stats->mati_kurang_48;
 
-            // 5. Rumus Indikator Pelayanan (Standar Depkes/Barber-Johnson)
-
-            // BOR (Bed Occupancy Ratio): (HP / (TT * t)) * 100
             $bor = ($jumlahTempatTidur * $jumlahPeriode) > 0
                 ? ($hp / ($jumlahTempatTidur * $jumlahPeriode)) * 100 : 0;
 
-            // AVLOS (Average Length of Stay): LD / Keluar (Hidup + Mati)
             $avlos = $keluar > 0 ? $ld / $keluar : 0;
 
-            // BTO (Bed Turn Over): Keluar (Hidup + Mati) / TT
             $bto = $jumlahTempatTidur > 0 ? $keluar / $jumlahTempatTidur : 0;
 
-            // TOI (Turn Over Interval): ((TT * t) - HP) / Keluar (Hidup + Mati)
             $toi = $keluar > 0 ? (($jumlahTempatTidur * $jumlahPeriode) - $hp) / $keluar : 0;
 
-            // GDR (Gross Death Rate): (Mati Total / Keluar) * 1000
             $gdr = $keluar > 0 ? ($matiTotal / $keluar) * 1000 : 0;
 
-            // NDR (Net Death Rate): (Mati >= 48 Jam / Keluar) * 1000
             $ndr = $keluar > 0 ? ($mati48Plus / $keluar) * 1000 : 0;
 
             return [
@@ -730,35 +718,57 @@ class LaporanController extends Controller
 
     public function perviewLaporanIndikatorPelayanan(Request $request)
     {
+        // 1. Ubah validasi agar menerima year dan month
         $request->validate([
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
+            'year' => 'required|numeric',
+            'month' => 'nullable|numeric|between:1,12',
+            'ruangan_id' => 'nullable'
         ]);
 
         $today = Carbon::today();
-        $approved = ApprovedDay::whereDate('created_at', $today)->where('jenis_laporan', 'indikator')->first();
+        $approved = ApprovedDay::whereDate('created_at', $today)
+            ->where('jenis_laporan', 'indikator')
+            ->first();
 
         if (!$approved) {
             return back()->withErrors('Silahkan menunggu kepala rumah sakit untuk memverifikasi');
         }
 
-        $startDate = Carbon::parse($request->input('start_date'))->startOfDay();
-        $endDate = Carbon::parse($request->input('end_date'))->endOfDay();
+        // 2. Logika penentuan tanggal (sama dengan getLaporanBOR)
+        $year = $request->input('year');
+        $month = $request->input('month');
         $ruanganId = $request->input('ruangan_id');
 
-        $data = $this->getLaporanIndikator($startDate, $endDate, $ruanganId);
+        if ($month) {
+            // Jika ada bulan tertentu
+            $startDate = Carbon::createFromDate($year, $month, 1)->startOfDay();
+            $endDate = Carbon::createFromDate($year, $month, 1)->endOfMonth()->endOfDay();
+
+            // Jika bulan berjalan, tetap batasi transaksi sampai hari ini 
+            // (opsional: jika ingin HP hanya sampai hari ini saja)
+            if ($endDate->greaterThan(Carbon::today()->endOfDay())) {
+                $endDate = Carbon::today()->endOfDay();
+            }
+        } else {
+            // Sesuai permintaan: Jika "Semua Bulan", paksa periode setahun penuh (365/366 hari)
+            $startDate = Carbon::createFromDate($year, 1, 1)->startOfDay();
+            $endDate = Carbon::createFromDate($year, 12, 31)->endOfDay();
+        }
+
+        $data = $this->getLaporanIndikator($startDate, $endDate, $ruanganId, $month);
 
         $pdf = Pdf::loadView('pages.laporan.indikator-pdf', [
             'data' => $data,
-            'start_date' => $startDate,
-            'end_date' => $endDate
+            'start_date' => $startDate, // Dikirim ke view PDF
+            'end_date' => $endDate,     // Dikirim ke view PDF
+            'year' => $year,
+            'month' => $month
         ]);
 
         $pdf->setPaper('a4', 'landscape');
 
-        return $pdf->stream('laporan-indikator-' . $startDate->format('Y-m-d') . '-to-' . $endDate->format('Y-m-d') . '.pdf');
+        return $pdf->stream('laporan-indikator-' . $year . ($month ? "-$month" : "-all") . '.pdf');
     }
-
     public function exportLaporanIndikatorPelayanan(Request $request)
     {
 
